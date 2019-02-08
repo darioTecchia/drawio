@@ -2865,23 +2865,46 @@
 		{
 
 			// CUSTOM MENU START
+			// LOAD STENCIL ACTION
 			editorUi.actions.addAction('loadStencil', function()
 			{
-				console.log('Carica Stencil');
+				// load custom palette
+				document.getElementById('file-input').onchange = function(e) {
+					var file = e.target.files[0];
+					if (!file) {
+						return;
+					}
+					var reader = new FileReader();
+					reader.onload = function (e) {
+						let contents = e.target.result;
+						let data = new Blob([contents], {type: 'application/xml'})
+						let url = URL.createObjectURL(data)
+						let parser = new DOMParser();
+						let stencilXML = parser.parseFromString(contents, 'application/xml');
+						let stencilName = stencilXML.getElementsByTagName('shapes')[0].getAttribute('name')
+						editorUi.sidebar.addStencilPalette(stencilName.toLowerCase, stencilName, url,
+							';whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=2');
+					};
+					reader.readAsText(file);
+				}
+				document.getElementById('file-input').click();
+				
 			});
-			this.addMenuItems(menu, ['loadStencil']);
 
+			// LOAD RULES ACTION
 			editorUi.actions.addAction('loadRules', function()
 			{
 				console.log('Carica Regole');
 			});
-			this.addMenuItems(menu, ['loadRules']);
 
+			// LOAD SEMANTI RULES ACTION
 			editorUi.actions.addAction('loadSemantiRules', function()
 			{
 				console.log('Carica Regole Semantiche');
 			});
-			this.addMenuItems(menu, ['loadSemantiRules']);
+
+
+			this.addMenuItems(menu, ['loadStencil', 'loadRules', 'loadSemantiRules']);
 			// CUSTOM MENU END
 
 			menu.addSeparator(parent);

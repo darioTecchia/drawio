@@ -73,6 +73,7 @@ mxscript(drawDevUrl + 'js/diagramly/sidebar/Sidebar-WebIcons.js');
 
 mxscript(drawDevUrl + 'js/diagramly/util/mxJsCanvas.js');
 mxscript(drawDevUrl + 'js/diagramly/util/mxAsyncCanvas.js');
+mxscript(drawDevUrl + 'js/diagramly/util/myUtil.js');
 
 mxscript(drawDevUrl + 'js/diagramly/DrawioFile.js');
 mxscript(drawDevUrl + 'js/diagramly/LocalFile.js');
