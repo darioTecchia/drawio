@@ -2863,6 +2863,29 @@
 
 		this.put('file', new Menu(mxUtils.bind(this, function(menu, parent)
 		{
+
+			// CUSTOM MENU START
+			editorUi.actions.addAction('loadStencil', function()
+			{
+				console.log('Carica Stencil');
+			});
+			this.addMenuItems(menu, ['loadStencil']);
+
+			editorUi.actions.addAction('loadRules', function()
+			{
+				console.log('Carica Regole');
+			});
+			this.addMenuItems(menu, ['loadRules']);
+
+			editorUi.actions.addAction('loadSemantiRules', function()
+			{
+				console.log('Carica Regole Semantiche');
+			});
+			this.addMenuItems(menu, ['loadSemantiRules']);
+			// CUSTOM MENU END
+
+			menu.addSeparator(parent);
+
 			if (urlParams['embed'] == '1')
 			{
 				this.addSubmenu('importFrom', menu, parent);

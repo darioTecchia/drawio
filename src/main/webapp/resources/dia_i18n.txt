@@ -757,3 +757,7 @@ recentlyUsed=recentlyUsed
 listView=listView
 gridView=gridView
 resultsFor=resultsFor
+
+loadStencil=loadStencil
+loadRules=loadRules
+loadSemantiRules=loadSemantiRules
