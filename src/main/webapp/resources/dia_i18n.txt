@@ -761,3 +761,4 @@ resultsFor=resultsFor
 loadStencil=loadStencil
 loadRules=loadRules
 loadSemantiRules=loadSemantiRules
+loadConnectors=loadConnectors

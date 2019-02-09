@@ -3589,6 +3589,76 @@ Sidebar.prototype.addStencilPalette = function(id, title, stencilFile, style, ig
 };
 
 /**
+ * Add the given stencil palette. customized.
+ */
+Sidebar.prototype.addConnectorsPalette = function (id, title, connectorsFile, style, ignore, onInit, scale) 
+{
+	this.addPalette(id, title, true, mxUtils.bind(this, function (content) {
+		console.log(content);
+		
+		if (window.XMLHttpRequest) {
+			xhttp = new XMLHttpRequest();
+		}
+		else {
+			xhttp = new ActiveXObject("Microsoft.XMLDOM");
+		}
+
+		xhttp.open("GET", connectorsFile, false);
+		xhttp.send();
+
+		var connectors = xhttp.responseXML.getElementsByTagName("connector");
+
+		for (var i = 0; i < connectors.length; i++) {
+
+			var value = connectors[i].getElementsByTagName("values")[0];
+			if (value.getAttribute("name") != "Touch") {
+				var pattern = new RegExp("[^content.appendChild\(this.createEdgeTemplate\(](.*)[^\)\);]");
+				var stringaCode = value.getAttribute("code");
+				var result = null;
+				var newNome = "";
+
+				result = stringaCode.match(pattern);
+				if (result.length > 0) {
+					var array = result[0].split(",");
+					if (array.length > 4) {
+						var valueStr = array[4];
+						var array1 = array[0].split(";");
+						if (array1.length > 1) {
+							var array2 = array1[1].split("graphicRef=");
+							if (array2.length > 1) {
+								var graphicRef = array2[1];
+								if (graphicRef != null) {
+									graphicRef = graphicRef.toLowerCase();
+								}
+							}
+						}
+					}
+				}
+
+				if (newNome.length > 0) {
+					var concat = "content.appendChild(this.createEdgeTemplate(";
+					for (var j = 0; j < array.length; j++) {
+						if (j == 4) {
+							concat = concat + " '" + newNome + "'";
+						} else {
+							concat = concat + array[j];
+						}
+						if (j != (array.length - 1)) {
+							concat = concat + ",";
+						}
+					}
+					concat = concat + "));";
+					stringaCode = concat;
+				}
+				console.log(stringaCode);
+				eval(stringaCode);
+			}
+		}
+
+	}));
+};
+
+/**
  * Adds the given stencil palette.
  */
 Sidebar.prototype.destroy = function()

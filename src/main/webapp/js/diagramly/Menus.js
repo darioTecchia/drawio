@@ -2878,11 +2878,38 @@
 					reader.onload = function (e) {
 						let contents = e.target.result;
 						let data = new Blob([contents], {type: 'application/xml'})
-						let url = URL.createObjectURL(data)
+						let url = URL.createObjectURL(data);
 						let parser = new DOMParser();
 						let stencilXML = parser.parseFromString(contents, 'application/xml');
-						let stencilName = stencilXML.getElementsByTagName('shapes')[0].getAttribute('name')
+						let stencilName = stencilXML.getElementsByTagName('shapes')[0].getAttribute('name');
+						localStorage.setItem('STENCIL_' + stencilName, contents);
 						editorUi.sidebar.addStencilPalette(stencilName.toLowerCase, stencilName, url,
+							';whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=2');
+					};
+					reader.readAsText(file);
+				}
+				document.getElementById('file-input').click();
+			});
+
+			// LOAD CONNECTORS ACTION
+			editorUi.actions.addAction('loadConnectors', function()
+			{
+				// load custom connector palette
+				document.getElementById('file-input').onchange = function(e) {
+					var file = e.target.files[0];
+					if (!file) {
+						return;
+					}
+					var reader = new FileReader();
+					reader.onload = function (e) {
+						let contents = e.target.result;
+						let data = new Blob([contents], {type: 'application/xml'})
+						let url = URL.createObjectURL(data);
+						let parser = new DOMParser();
+						let stencilXML = parser.parseFromString(contents, 'application/xml');
+						let stencilName = stencilXML.getElementsByTagName('connectors')[0].getAttribute('name');
+						localStorage.setItem('CONNECTOR_' + stencilName, contents);
+						editorUi.sidebar.addConnectorsPalette(stencilName.toLowerCase, stencilName, url,
 							';whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=2');
 					};
 					reader.readAsText(file);
@@ -2904,7 +2931,7 @@
 			});
 
 
-			this.addMenuItems(menu, ['loadStencil', 'loadRules', 'loadSemantiRules']);
+			this.addMenuItems(menu, ['loadStencil', 'loadConnectors', 'loadRules', 'loadSemantiRules']);
 			// CUSTOM MENU END
 
 			menu.addSeparator(parent);
