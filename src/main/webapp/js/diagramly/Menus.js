@@ -59,6 +59,7 @@
 		menusInit.apply(this, arguments);
 		var editorUi = this.editorUi;
 		var graph = editorUi.editor.graph;
+		var checkUtil = new CheckUtil(editorUi);
 		var isGraphEnabled = mxUtils.bind(graph, graph.isEnabled);
 		var googleEnabled = ((urlParams['embed'] != '1' && urlParams['gapi'] != '0') ||
 				(urlParams['embed'] == '1' && urlParams['gapi'] == '1')) && mxClient.IS_SVG &&
@@ -2861,6 +2862,18 @@
 			}
 		})));
 
+		this.put('check', new Menu(mxUtils.bind(this, function(menu, parent) {
+			editorUi.actions.addAction('check', function()
+			{
+				let rules = localStorage.getItem('RULES')
+				rules = JSON.parse(rules);
+				
+				checkUtil.applyRules(graph.model.cells, rules);
+				checkUtil.applySemanticRules(1, 2);
+			});
+			this.addMenuItems(menu, ['check'], parent);
+		})));
+
 		this.put('file', new Menu(mxUtils.bind(this, function(menu, parent)
 		{
 
@@ -2882,6 +2895,8 @@
 						let parser = new DOMParser();
 						let stencilXML = parser.parseFromString(contents, 'application/xml');
 						let stencilName = stencilXML.getElementsByTagName('shapes')[0].getAttribute('name');
+						window.loadedStencils.push(stencilName);
+						localStorage.setItem('loadedStencils', JSON.stringify(window.loadedStencils));
 						localStorage.setItem('STENCIL_' + stencilName, contents);
 						editorUi.sidebar.addStencilPalette(stencilName.toLowerCase, stencilName, url,
 							';whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=2');
@@ -2915,21 +2930,45 @@
 					reader.readAsText(file);
 				}
 				document.getElementById('file-input').click();
-				
 			});
 
 			// LOAD RULES ACTION
 			editorUi.actions.addAction('loadRules', function()
 			{
-				console.log('Carica Regole');
+				// load custom connector palette
+				document.getElementById('file-input').onchange = function(e) {
+					var file = e.target.files[0];
+					if (!file) {
+						return;
+					}
+					var reader = new FileReader();
+					reader.onload = function (e) {
+						let contents = e.target.result;
+						localStorage.setItem('RULES', contents);
+					};
+					reader.readAsText(file);
+				}
+				document.getElementById('file-input').click();
 			});
 
-			// LOAD SEMANTI RULES ACTION
+			// LOAD SEMANTIC RULES ACTION
 			editorUi.actions.addAction('loadSemantiRules', function()
 			{
-				console.log('Carica Regole Semantiche');
+				// load custom connector palette
+				document.getElementById('file-input').onchange = function(e) {
+					var file = e.target.files[0];
+					if (!file) {
+						return;
+					}
+					var reader = new FileReader();
+					reader.onload = function (e) {
+						let contents = e.target.result;
+						localStorage.setItem('SEMANTI_RULES', contents);
+					};
+					reader.readAsText(file);
+				}
+				document.getElementById('file-input').click();
 			});
-
 
 			this.addMenuItems(menu, ['loadStencil', 'loadConnectors', 'loadRules', 'loadSemantiRules']);
 			// CUSTOM MENU END

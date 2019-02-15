@@ -132,3 +132,8 @@ if (urlParams['tableLayout'] == '1')
 {
   mxscript(drawDevUrl + 'js/diagramly/mxTableLayout.js');
 }
+
+// tive files
+mxscript(tiveBasePath + '/Sidebar.js');
+mxscript(tiveBasePath + '/CheckUtil.js');
+mxscript(tiveBasePath + '/Menus.js');

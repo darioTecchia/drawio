@@ -423,6 +423,14 @@
 	 */
 	Sidebar.prototype.init = function()
 	{
+		for(let stencil in window.loadedStencils) {
+			console.log(window.loadedStencils[stencil]);
+			let stencilXML = localStorage.getItem('STENCIL_' + window.loadedStencils[stencil]);
+			let data = new Blob([stencilXML], {type: 'application/xml'})
+			let url = URL.createObjectURL(data);
+			this.addStencilPalette(window.loadedStencils[stencil].toLowerCase, window.loadedStencils[stencil], url,
+				';whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=2');
+		}
 		// Defines all entries for the sidebar. This is used in the MoreShapes dialog. Create screenshots using the savesidebar URL parameter and
 		// http://www.alderg.com/merge.html for creating a vertical stack of PNG images if multiple sidebars are part of an entry.
 		this.entries = [{title: mxResources.get('standard'),
@@ -488,7 +496,7 @@
 			this.addTagIndex(this.editorUi.editor.graph.decompress(this.tagIndex));
 			this.tagIndex = null;
 		}
-		
+
 		this.initPalettes();
 	}
 	

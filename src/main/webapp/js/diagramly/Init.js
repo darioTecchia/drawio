@@ -10,6 +10,12 @@ window.mxLoadSettings = window.mxLoadSettings || urlParams['configure'] != '1';
 // Checks for SVG support
 window.isSvgBrowser = window.isSvgBrowser || (navigator.userAgent.indexOf('MSIE') < 0 || document.documentMode >= 9);
 
+// Loaded Props
+window.loadedStencils = localStorage.getItem('loadedStencils') ? JSON.parse(localStorage.getItem('loadedStencils')) : [];
+window.loadedEdges = localStorage.getItem('loadedEdges') ? JSON.parse(localStorage.getItem('loadedEdges')) : [];
+window.loadedRules = localStorage.getItem('loadedRules') ? JSON.parse(localStorage.getItem('loadedRules')) : [];;
+window.loadedSemanticRules = localStorage.getItem('loadedSemanticRules') ? JSON.parse(localStorage.getItem('loadedSemanticRules')) : [];
+
 // CUSTOM_PARAMETERS - URLs for save and export
 window.EXPORT_URL = window.EXPORT_URL || 'https://exp.draw.io/ImageExport4/export';
 window.PLANT_URL = window.PLANT_URL || 'https://exp-plant.draw.io/plantuml4';

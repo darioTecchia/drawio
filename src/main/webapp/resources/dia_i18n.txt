@@ -762,3 +762,4 @@ loadStencil=loadStencil
 loadRules=loadRules
 loadSemantiRules=loadSemantiRules
 loadConnectors=loadConnectors
+check=check
