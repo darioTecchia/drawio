@@ -423,14 +423,26 @@
 	 */
 	Sidebar.prototype.init = function()
 	{
-		for(let stencil in window.loadedStencils) {
-			console.log(window.loadedStencils[stencil]);
-			let stencilXML = localStorage.getItem('STENCIL_' + window.loadedStencils[stencil]);
-			let data = new Blob([stencilXML], {type: 'application/xml'})
+
+		if(localStorage.getItem('STENCIL')) {
+			let stencil = localStorage.getItem('STENCIL');
+			let parser = new DOMParser();
+			let stencilXML = parser.parseFromString(stencil, 'application/xml');
+			let stencilName = stencilXML.getElementsByTagName('shapes')[0].getAttribute('name');
+			let data = new Blob([stencil], {type: 'application/xml'});
 			let url = URL.createObjectURL(data);
-			this.addStencilPalette(window.loadedStencils[stencil].toLowerCase, window.loadedStencils[stencil], url,
-				';whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=2');
+			this.addStencilPalette(stencilName.toLowerCase, stencilName, url, ';whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=2');
 		}
+		if(localStorage.getItem('CONNECTOR')) {
+			let connector = localStorage.getItem('CONNECTOR');
+			let parser = new DOMParser();
+			let connectorXML = parser.parseFromString(connector, 'application/xml');
+			let connectorName = connectorXML.getElementsByTagName('connectors')[0].getAttribute('name');
+			let data = new Blob([connector], {type: 'application/xml'});
+			let url = URL.createObjectURL(data);
+			this.addConnectorsPalette(connectorName.toLowerCase, connectorName, url, ';whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=2');
+		}
+
 		// Defines all entries for the sidebar. This is used in the MoreShapes dialog. Create screenshots using the savesidebar URL parameter and
 		// http://www.alderg.com/merge.html for creating a vertical stack of PNG images if multiple sidebars are part of an entry.
 		this.entries = [{title: mxResources.get('standard'),
@@ -772,7 +784,7 @@
 			mxLog.textarea.value = '';
 		}
 
-		this.addSearchPalette(true);
+		// this.addSearchPalette(true);
 		
 		// Adds custom sections first
 		if (this.customEntries != null)

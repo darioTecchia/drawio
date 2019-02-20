@@ -3594,7 +3594,6 @@ Sidebar.prototype.addStencilPalette = function(id, title, stencilFile, style, ig
 Sidebar.prototype.addConnectorsPalette = function (id, title, connectorsFile, style, ignore, onInit, scale) 
 {
 	this.addPalette(id, title, true, mxUtils.bind(this, function (content) {
-		console.log(content);
 		
 		if (window.XMLHttpRequest) {
 			xhttp = new XMLHttpRequest();
@@ -3650,7 +3649,6 @@ Sidebar.prototype.addConnectorsPalette = function (id, title, connectorsFile, st
 					concat = concat + "));";
 					stringaCode = concat;
 				}
-				console.log(stringaCode);
 				eval(stringaCode);
 			}
 		}

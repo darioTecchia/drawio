@@ -2895,9 +2895,7 @@
 						let parser = new DOMParser();
 						let stencilXML = parser.parseFromString(contents, 'application/xml');
 						let stencilName = stencilXML.getElementsByTagName('shapes')[0].getAttribute('name');
-						window.loadedStencils.push(stencilName);
-						localStorage.setItem('loadedStencils', JSON.stringify(window.loadedStencils));
-						localStorage.setItem('STENCIL_' + stencilName, contents);
+						localStorage.setItem('STENCIL', contents);
 						editorUi.sidebar.addStencilPalette(stencilName.toLowerCase, stencilName, url,
 							';whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=2');
 					};
@@ -2923,7 +2921,7 @@
 						let parser = new DOMParser();
 						let stencilXML = parser.parseFromString(contents, 'application/xml');
 						let stencilName = stencilXML.getElementsByTagName('connectors')[0].getAttribute('name');
-						localStorage.setItem('CONNECTOR_' + stencilName, contents);
+						localStorage.setItem('CONNECTOR', contents);
 						editorUi.sidebar.addConnectorsPalette(stencilName.toLowerCase, stencilName, url,
 							';whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=2');
 					};
@@ -2963,7 +2961,7 @@
 					var reader = new FileReader();
 					reader.onload = function (e) {
 						let contents = e.target.result;
-						localStorage.setItem('SEMANTI_RULES', contents);
+						localStorage.setItem('SEMANTIC_RULES', contents);
 					};
 					reader.readAsText(file);
 				}
