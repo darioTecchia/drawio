@@ -12,6 +12,10 @@
     CheckUtil.prototype.init = function () { }
 
     CheckUtil.prototype.applyRules = function (graph, rules) {
+        for(let elem in graph) {
+            let graphElem = graph[elem];
+            delete graphElem.name
+        }
         this.errors = [];
         delete graph[0];
         delete graph[1];
@@ -76,8 +80,6 @@
             allRefMap[connector._ref].push(connector);
         }
 
-        console.log(allRefMap);
-
         /**
          * Solve node ambiguity
          */
@@ -96,23 +98,23 @@
                 }
             } else {
                 console.log('Ambiguity detected...\nResolving...');
-                let correct = false;
                 let edgesByApName = this.getEdgesByAPName(graphElem, elemState);
+                console.log(edgesByApName);
                 for (let elem in allRefMap[elemGraphRef]) {
+                    let correct = true;
                     let token = allRefMap[elemGraphRef][elem];
                     for (let elem in token.ap) {
                         let ap = token.ap[elem];
-                        if (eval(edgesByApName[ap._ref].length + ap._connectNum)) {
-                            correct = true;
-                        } else {
-                            correct = false;
-                        }
+                        correct = correct && eval(edgesByApName[ap._ref].length + ap._connectNum);
                     }
-                    if(correct) {
+                    if (correct) {
                         graphElem.name = token._name;
                         console.log(graphElem.value + " is a " + token._name + "!");
                         continue check_for;
                     }
+                }
+                if (!graphElem.name) {
+                    this.errors.push({ 'error': 'Impossible to disambigue this node!', 'elem': graphElem });
                 }
             }
         }
