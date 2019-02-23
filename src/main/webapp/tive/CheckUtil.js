@@ -76,9 +76,15 @@
             allRefMap[connector._ref].push(connector);
         }
 
-        for (let vertex in vertexs) {
+        console.log(allRefMap);
+
+        /**
+         * Solve node ambiguity
+         */
+        check_for: for (let vertex in vertexs) {
             let graphElem = vertexs[vertex];
             let elemState = this.editorUi.editor.graph.view.getState(graphElem);
+            this.changeShapeColor(graphElem, 'black');
 
             let elemGraphRef = elemState.shape.stencil.desc.attributes.graphicRef.value;
             if (allRefMap[elemGraphRef].length == 1) {
@@ -90,19 +96,40 @@
                 }
             } else {
                 console.log('Ambiguity detected...\nResolving...');
+                let correct = false;
+                let edgesByApName = this.getEdgesByAPName(graphElem, elemState);
+                for (let elem in allRefMap[elemGraphRef]) {
+                    let token = allRefMap[elemGraphRef][elem];
+                    for (let elem in token.ap) {
+                        let ap = token.ap[elem];
+                        if (eval(edgesByApName[ap._ref].length + ap._connectNum)) {
+                            correct = true;
+                        } else {
+                            correct = false;
+                        }
+                    }
+                    if(correct) {
+                        graphElem.name = token._name;
+                        console.log(graphElem.value + " is a " + token._name + "!");
+                        continue check_for;
+                    }
+                }
             }
         }
 
-        // RIMUOVERE IL ROSSO, SE NON E' IN ERRORE O CORRETTO.
+        /**
+         * Solve edges ambiguity
+         */
         check_for: for (let edge in edges) {
             let graphElem = edges[edge];
             let elemState = this.editorUi.editor.graph.view.getState(graphElem);
+            this.changeShapeColor(graphElem, 'black');
 
             let elemGraphRef = elemState.style.graphicRef;
             if (graphElem.source == graphElem.target)
                 this.errors.push({ 'error': 'Loop', 'elem': graphElem });
             if (graphElem.source == null || graphElem.target == null)
-                this.errors.push({ 'error': 'Edge with null attaching point', 'elem': graphElem });
+                this.errors.push({ 'error': 'Edge with null attaching point!', 'elem': graphElem });
             if (allRefMap[elemGraphRef].length == 1) {
                 graphElem.name = allRefMap[elemGraphRef][0]._name;
                 console.log(graphElem.value + " is a " + graphElem.name + "!");
@@ -112,7 +139,6 @@
                 check: for (let cap in allRefMap[elemGraphRef]) {
                     let elemCap = allRefMap[elemGraphRef][cap];
                     let myCaps = [elemCap.cap[0]._type, elemCap.cap[1]._type];
-                    console.log(caps.sort(), myCaps.sort());
                     if (caps.sort()[0] == myCaps.sort()[0] && caps.sort()[1] == myCaps.sort()[1]) {
                         graphElem.name = elemCap._name;
                         console.log(graphElem.value + " is a " + graphElem.name + "!");
@@ -122,47 +148,41 @@
                 if (!graphElem.name) {
                     this.errors.push({ 'error': 'Impossible to disambigue this edge!', 'elem': graphElem });
                 }
-                this.errors.push({ 'error': 'La madonna è puttana!', 'elem': graphElem });
+                this.errors.push({ 'error': 'This edge is used wrong!', 'elem': graphElem });
             }
         }
 
-        // for (elem in graph) {
-        //     let graphElem = graph[elem];
-        //     let elemState = this.editorUi.editor.graph.view.getState(graphElem);
-        //     console.log(graphElem, elemState);
-        //     this.changeShapeColor(graphElem, 'red');
-        //     if (graphElem.isVertex()) {
-        //         let elemGraphRef = elemState.shape.stencil.desc.attributes.graphicRef.value;
-        //         if (allRefMap[elemGraphRef].length == 1) {
-        //             graphElem.name = allRefMap[elemGraphRef][0]._name;
-        //             console.log(graphElem.value + " is a " + graphElem.name + "!");
-        //             for (let elem in allRefMap[elemGraphRef][0].ap) {
-        //                 let ref = allRefMap[elemGraphRef][0].ap[elem];
-        //                 this.aliases[elemGraphRef][ref._ref] = ref._type;
-        //             }
-        //         } else {
-        //             console.log('Ambiguity detected...\nResolving...');
-        //         }
-        //     } else {
-        //         let elemGraphRef = elemState.style.graphicRef;
-        //         if (graphElem.source == graphElem.target)
-        //             this.errors.push({ 'error': 'Loop', 'elem': graphElem });
-        //         if (graphElem.source == null || graphElem.target == null)
-        //             this.errors.push({ 'error': 'Edge with null attaching point', 'elem': graphElem });
-        //         if (allRefMap[elemGraphRef].length == 1) {
-        //             graphElem.name = allRefMap[elemGraphRef][0]._name;
-        //             console.log(graphElem.value + " is a " + graphElem.name + "!");
-        //         } else {
-        //             console.log('Ambiguity detected...\nResolving...');
-        //             let caps = this.getCapsRefs(graphElem, elemState);
-        //             console.log(caps);
-        //         }
-        //     }
-        //     this.changeShapeColor(graphElem, 'black');
-        // }
-
-        console.log(this.aliases);
         this.printErrors();
+    }
+
+    CheckUtil.prototype.getEdgesByAPName = function (symbol, symbolState, APName) {
+        let edges = {};
+        for (let elem in symbolState.shape.stencil.constraints) {
+            let constraint = symbolState.shape.stencil.constraints[elem];
+            edges[constraint.name] = [];
+        }
+        for (let elem in symbol.edges) {
+            let edge = symbol.edges[elem];
+            let edgeState = this.editorUi.editor.graph.view.getState(edge);
+            let sourceState = this.editorUi.editor.graph.view.getState(edge.source);
+            let targetState = this.editorUi.editor.graph.view.getState(edge.target);
+            if (edge.source.id == symbol.id) {
+                let exitX = edgeState.style.exitX;
+                let exitY = edgeState.style.exitY;
+                let a = this.getSymAPConstraintName(sourceState, exitX, exitY);
+                edges[a].push(edge);
+            } else if (edge.target.id == symbol.id) {
+                let entryX = edgeState.style.entryX;
+                let entryY = edgeState.style.entryY;
+                let b = this.getSymAPConstraintName(targetState, entryX, entryY);
+                edges[b].push(edge);
+            }
+        }
+        return edges;
+    }
+
+    CheckUtil.prototype.getOccurranceConstraintByName = function (symbol, symbolState, name) {
+        return this.getEdgesByAPName(symbol, symbolState, name).length;
     }
 
     /**
@@ -178,7 +198,7 @@
     /**
      * Get shape attaching points type
      */
-    CheckUtil.prototype.getSapsType = function (shape) {
+    CheckUtil.prototype.getSymbolAPsType = function (shape) {
 
     }
 
