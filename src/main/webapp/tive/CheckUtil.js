@@ -1,11 +1,17 @@
 (function () {
 
+    function connectNum(ApName) {
+        return ApName.length;
+    }
+
     CheckUtil = function (editorUi) {
         this.editorUi = editorUi;
         this.checkUtil = Object();
         // this.getState = this.editorUi.editor.graph.view.getState;
         this.errors = [];
         this.aliases = [];
+        this.allRefMap = {};
+        this.rulesGrafRefs = {};
         this.init();
     }
 
@@ -54,30 +60,26 @@
             };
         }));
 
-        let rulesGrafRefs = rules.language.token.map((elem) => {
-            return {
-                'graphicRef': elem._ref,
-                'name': elem._name
-            }
-        }).concat(rules.language.connector.map((elem) => {
-            return {
-                'graphicRef': elem._ref,
-                'name': elem._name
-            }
-        }));
-
-        let allRefMap = {};
         for (grafRef in allStencilsGrafRef) {
-            allRefMap[allStencilsGrafRef[grafRef].graphicRef] = []
+            this.allRefMap[allStencilsGrafRef[grafRef].graphicRef] = [];
         }
-        this.aliases = JSON.parse(JSON.stringify(allRefMap));
+        this.aliases = JSON.parse(JSON.stringify(this.allRefMap));
         for (elem in rules.language.token) {
             let token = rules.language.token[elem];
-            allRefMap[token._ref].push(token);
+            this.allRefMap[token._ref].push(token);
         }
         for (elem in rules.language.connector) {
             let connector = rules.language.connector[elem];
-            allRefMap[connector._ref].push(connector);
+            this.allRefMap[connector._ref].push(connector);
+        }
+
+        for(let elem in rules.language.token) {
+            let token = rules.language.token[elem];
+            this.rulesGrafRefs[token._ref] = token;
+        }
+        for(let elem in rules.language.connector) {
+            let token = rules.language.connector[elem];
+            this.rulesGrafRefs[token._ref] = token;
         }
 
         /**
@@ -86,26 +88,30 @@
         check_for: for (let vertex in vertexs) {
             let graphElem = vertexs[vertex];
             let elemState = this.editorUi.editor.graph.view.getState(graphElem);
+            graphElem.name = "";
             this.changeShapeColor(graphElem, 'black');
-
+            
             let elemGraphRef = elemState.shape.stencil.desc.attributes.graphicRef.value;
-            if (allRefMap[elemGraphRef].length == 1) {
-                graphElem.name = allRefMap[elemGraphRef][0]._name;
+
+            if (this.allRefMap[elemGraphRef].length == 1) {
+                graphElem.name = this.allRefMap[elemGraphRef][0]._name;
                 console.log(graphElem.value + " is a " + graphElem.name + "!");
-                for (let vertex in allRefMap[elemGraphRef][0].ap) {
-                    let ref = allRefMap[elemGraphRef][0].ap[vertex];
+                for (let vertex in this.allRefMap[elemGraphRef][0].ap) {
+                    let ref = this.allRefMap[elemGraphRef][0].ap[vertex];
                     this.aliases[elemGraphRef][ref._ref] = ref._type;
                 }
             } else {
                 console.log('Ambiguity detected...\nResolving...');
                 let edgesByApName = this.getEdgesByAPName(graphElem, elemState);
-                console.log(edgesByApName);
-                for (let elem in allRefMap[elemGraphRef]) {
+                for (let elem in this.allRefMap[elemGraphRef]) {
                     let correct = true;
-                    let token = allRefMap[elemGraphRef][elem];
+                    let token = this.allRefMap[elemGraphRef][elem];
                     for (let elem in token.ap) {
                         let ap = token.ap[elem];
                         correct = correct && eval(edgesByApName[ap._ref].length + ap._connectNum);
+                    }
+                    if(!!this.rulesGrafRefs[elemGraphRef].localConstraint) {
+                        correct = correct && this.checkSymbolLocalConstraint(graphElem, elemState);
                     }
                     if (correct) {
                         graphElem.name = token._name;
@@ -125,6 +131,7 @@
         check_for: for (let edge in edges) {
             let graphElem = edges[edge];
             let elemState = this.editorUi.editor.graph.view.getState(graphElem);
+            graphElem.name = "";
             this.changeShapeColor(graphElem, 'black');
 
             let elemGraphRef = elemState.style.graphicRef;
@@ -132,14 +139,14 @@
                 this.errors.push({ 'error': 'Loop', 'elem': graphElem });
             if (graphElem.source == null || graphElem.target == null)
                 this.errors.push({ 'error': 'Edge with null attaching point!', 'elem': graphElem });
-            if (allRefMap[elemGraphRef].length == 1) {
-                graphElem.name = allRefMap[elemGraphRef][0]._name;
+            if (this.allRefMap[elemGraphRef].length == 1) {
+                graphElem.name = this.allRefMap[elemGraphRef][0]._name;
                 console.log(graphElem.value + " is a " + graphElem.name + "!");
             } else {
                 console.log('Ambiguity detected...\nResolving...');
                 let caps = this.getCapsRefs(graphElem, elemState);
-                check: for (let cap in allRefMap[elemGraphRef]) {
-                    let elemCap = allRefMap[elemGraphRef][cap];
+                check: for (let cap in this.allRefMap[elemGraphRef]) {
+                    let elemCap = this.allRefMap[elemGraphRef][cap];
                     let myCaps = [elemCap.cap[0]._type, elemCap.cap[1]._type];
                     if (caps.sort()[0] == myCaps.sort()[0] && caps.sort()[1] == myCaps.sort()[1]) {
                         graphElem.name = elemCap._name;
@@ -185,6 +192,18 @@
 
     CheckUtil.prototype.getOccurranceConstraintByName = function (symbol, symbolState, name) {
         return this.getEdgesByAPName(symbol, symbolState, name).length;
+    }
+
+    /**
+     * check symbol local contraint
+     */
+    CheckUtil.prototype.checkSymbolLocalConstraint = function (symbol, symbolState) {
+        let elemGraphRef = symbolState.shape.stencil.desc.attributes.graphicRef.value;
+        let edgesByApName = this.getEdgesByAPName(symbol, symbolState);
+        for(let APName in edgesByApName) {
+            window[APName] = edgesByApName[APName];
+        }
+        return eval(this.rulesGrafRefs[elemGraphRef].localConstraint);
     }
 
     /**
