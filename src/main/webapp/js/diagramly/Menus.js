@@ -2865,11 +2865,13 @@
 		this.put('check', new Menu(mxUtils.bind(this, function(menu, parent) {
 			editorUi.actions.addAction('check', function()
 			{
-				let rules = localStorage.getItem('RULES')
+				let rules = localStorage.getItem('RULES');
 				rules = JSON.parse(rules);
+
+				let semanticRules = localStorage.getItem('SEMANTIC_RULES');
+				semanticRules = JSON.parse(semanticRules);
 				
-				checkUtil.applyRules(graph.model.cells, rules);
-				checkUtil.applySemanticRules(1, 2);
+				checkUtil.check(graph.model.cells, rules, semanticRules);
 			});
 			this.addMenuItems(menu, ['check'], parent);
 		})));

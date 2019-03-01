@@ -4,6 +4,10 @@
         return ApName.length;
     }
 
+    function numLoop(ApName) {
+        // TODO
+    }
+
     CheckUtil = function (editorUi) {
         this.editorUi = editorUi;
         this.checkUtil = Object();
@@ -17,26 +21,82 @@
 
     CheckUtil.prototype.init = function () { }
 
-    CheckUtil.prototype.applyRules = function (graph, rules) {
+    CheckUtil.prototype.check = function (graph, rules, semanticRules) {
+        delete graph[0];
+        delete graph[1];
         for(let elem in graph) {
             let graphElem = graph[elem];
             delete graphElem.name
         }
         this.errors = [];
-        delete graph[0];
-        delete graph[1];
+
+        console.log("Re-arranging the label...");
         this.arrangeLabel(graph);
+        console.log("The label are arranged!");
+
+        console.log("Removing the ambiguity...");
         this.removeAmbiguity(graph, rules);
+        console.log("The ambiguity are removed!");
+
+        console.log("Appling the rules...");
+        this.applyRules(graph, rules);
+        console.log('Rules applied!');
+
+        console.log("Appling the semantic rules...");
+        this.applySemanticRules(graph, semanticRules);
+        console.log('Semantic rules applied!')
+
+        this.printErrors();
+    }
+
+    CheckUtil.prototype.applyRules = function(graph, rules) {
+        let vertexs = this.getNodes(graph);
+        let edges = this.getEdges(graph);
+
+        for(let elem in rules.language.token) {
+            let tokenRule = rules.language.token[elem];
+            let tokenElements = vertexs.filter((vertex) => {
+                if(vertex.name == tokenRule._name) return vertex;
+            });
+            if(!eval(tokenElements.length + tokenRule._occurrences)) {
+                this.errors.push({ 'error': `Error! ${tokenRule._name}'occurrances must be ${tokenRule._occurrences}, but is ${tokenElements.length}`, 'elem': tokenRule });
+            }
+            for(let elem in tokenElements) {
+                let tokenElem = tokenElements[elem];
+                let tokenState = this.editorUi.editor.graph.view.getState(tokenElem);
+                let elemGraphRef = tokenState.shape.stencil.desc.attributes.graphicRef.value;
+
+                if(!!this.rulesGrafRefs[elemGraphRef].localConstraint) {
+                    if(!this.checkSymbolLocalConstraint(tokenElem, tokenState)) {
+                        this.errors.push({ 'error': `Error! Local Constraint is not respected!`, 'elem': tokenElem });
+                        this.changeShapeColor(tokenElem, 'red');
+                    }
+                }
+
+                let edgesByApName = this.getEdgesByAPName(tokenElem, tokenState);
+                for(let elem in tokenRule.ap) {
+                    let apRule = tokenRule.ap[elem];
+                    if( !eval( edgesByApName[apRule._ref].length + apRule._connectNum ) ) {
+                        this.errors.push({ 'error': `Error! Rules on sybol attacching point are not respected!`, 'elem': tokenElem });
+                        this.changeShapeColor(tokenElem, 'red');
+                    }
+                }
+            }
+        }
     }
 
     CheckUtil.prototype.applySemanticRules = function (graph, semanticRules) {
-        // TODO
+
+        console.log(graph, semanticRules);
+
     }
 
+    /**
+     * Remove all the ambiguity from the graph
+     */
     CheckUtil.prototype.removeAmbiguity = function (graph, rules) {
         let vertexs = this.getNodes(graph);
         let edges = this.getEdges(graph);
-        console.log(vertexs, edges, rules, this.editorUi);
         let parser = new DOMParser();
 
         let stencils = localStorage.getItem('STENCIL');
@@ -160,11 +220,13 @@
                 this.errors.push({ 'error': 'This edge is used wrong!', 'elem': graphElem });
             }
         }
-
-        this.printErrors();
+        
     }
 
-    CheckUtil.prototype.getEdgesByAPName = function (symbol, symbolState, APName) {
+    /**
+     * Get all the edge collected by AP Name
+     */
+    CheckUtil.prototype.getEdgesByAPName = function (symbol, symbolState) {
         let edges = {};
         for (let elem in symbolState.shape.stencil.constraints) {
             let constraint = symbolState.shape.stencil.constraints[elem];
@@ -190,6 +252,9 @@
         return edges;
     }
 
+    /**
+     * get all the occurance of edges on the AP
+     */
     CheckUtil.prototype.getOccurranceConstraintByName = function (symbol, symbolState, name) {
         return this.getEdgesByAPName(symbol, symbolState, name).length;
     }
@@ -214,13 +279,6 @@
         return symbolState.shape.stencil.constraints.find((constraint) => {
             return constraint.point.equals(myPoint);
         }).name;
-    }
-
-    /**
-     * Get shape attaching points type
-     */
-    CheckUtil.prototype.getSymbolAPsType = function (shape) {
-
     }
 
     /**
