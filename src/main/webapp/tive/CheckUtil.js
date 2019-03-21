@@ -5,8 +5,9 @@
      * - NEED TO CHECK IF THE GRAPH IS CONNECTED
      * - NEED TO STORE INFO ABOUNT AP NAME, TYPE, REF [OK]
      * - NEED TO SEPARATE INFO FOR SEMANTIC PURPOSE [OK]
-     * - IMPLEMENT followPath FUNCTION
+     * - IMPLEMENT followPath FUNCTION [OK]
      * - MOVE NODE TEXT INFO INTO THE DEFINITION FROM THE SEMANTIC DEFINITION (LOOK THE PAPAER)
+     * - IMPLEMENT getNodeByAPName AND getNodeByAPType [OK]
      */
 
     /** RULES FUNCTIONS */
@@ -38,24 +39,39 @@
         for (let elem in graph) {
             let graphElem = graph[elem];
             delete graphElem.name
+            delete graphElem.semanticProperty
         }
         this.errors = [];
+
+        console.log("%cRules", "color: blue;");
+        console.info('graph', this.printGraph(graph));
+        console.info('rules', rules);
+        console.info('semanticRules', semanticRules);
+
+        console.log("#############################################");
 
         console.log("%cRe-arranging the label...", "color: red;");
         this.arrangeLabel(graph);
         console.log("%cThe label are arranged!", "color: red;");
+
         console.log("#############################################");
+
         console.log("%cRemoving the ambiguity...", "color: orange;");
         this.removeAmbiguity(graph, rules);
         console.log("%cThe ambiguity are removed!", "color: orange;");
+
         console.log("#############################################");
+
         console.log("%cAppling the rules...", "color: yellow;");
         this.applyRules(graph, rules);
         console.log('%cRules applied!', "color: yellow;");
+
         console.log("#############################################");
+
         console.log("%cAppling the semantic rules...", "color: green;");
         this.applySemanticRules(graph, semanticRules);
         console.log('%cSemantic rules applied!', "color: green;");
+
         console.log("#############################################");
         this.printErrors();
     }
@@ -163,7 +179,6 @@
             let tokenRule = rules.language.token[elem];
             rulesByName[tokenRule._name] = tokenRule
         }
-        console.log(rulesByName, graph);
 
         /**
          * Solve node ambiguity
@@ -176,7 +191,7 @@
 
             if (this.allRefMap[elemGraphRef].length == 1) {
                 graphElem.name = this.allRefMap[elemGraphRef][0]._name;
-                console.log(graphElem.value + " is a " + graphElem.name + "!");
+                console.log(graphElem.id + " is a " + graphElem.name + "!");
                 graphElem.rules = rulesByName[graphElem.name];
                 for (let vertex in this.allRefMap[elemGraphRef][0].ap) {
                     let ref = this.allRefMap[elemGraphRef][0].ap[vertex];
@@ -197,8 +212,12 @@
                     }
                     if (correct) {
                         graphElem.name = token._name;
+                        console.log(graphElem.id + " is a " + token._name + "!");
                         graphElem.rules = rulesByName[graphElem.name];
-                        console.log(graphElem.value + " is a " + token._name + "!");
+                        for (let vertex in this.allRefMap[elemGraphRef][0].ap) {
+                            let ref = this.allRefMap[elemGraphRef][0].ap[vertex];
+                            this.aliases[elemGraphRef][ref._ref] = ref._type;
+                        }
                         continue check_for;
                     }
                 }
@@ -224,7 +243,7 @@
             if (this.allRefMap[elemGraphRef].length == 1) {
                 graphElem.name = this.allRefMap[elemGraphRef][0]._name;
                 graphElem.rules = rulesByName[graphElem.name];
-                console.log(graphElem.value + " is a " + graphElem.name + "!");
+                console.log(graphElem.id + " is a " + graphElem.name + "!");
             } else {
                 console.log('Ambiguity detected...\nResolving...');
                 let caps = this.getCapsRefs(graphElem, elemState);
@@ -233,7 +252,7 @@
                     let myCaps = [elemCap.cap[0]._type, elemCap.cap[1]._type];
                     if (caps.sort()[0] == myCaps.sort()[0] && caps.sort()[1] == myCaps.sort()[1]) {
                         graphElem.name = elemCap._name;
-                        console.log(graphElem.value + " is a " + graphElem.name + "!");
+                        console.log(graphElem.id + " is a " + graphElem.name + "!");
                         graphElem.rules = rulesByName[graphElem.name];
                         continue check_for;
                     }
@@ -246,13 +265,11 @@
         }
     }
 
-
     /**
      * Apply the semantic rules to the graph
      */
     CheckUtil.prototype.applySemanticRules = function (graph, semanticRules) {
         let new_graph = Object.assign({}, graph);
-        console.log(new_graph, semanticRules);
 
         // DELETING ALL THE NODES WHICH AREN'T SEMANTIC RULES
         for (let elem in new_graph) {
@@ -276,7 +293,6 @@
 
             if (graphElemSemRule.text) {
                 if (graphElemSemRule.text._type && graphElemSemRule.text._type.charAt(0) == '(') {
-                    console.log('RegExp Detected!: ', graphElemSemRule.text._type);
                     graphElem.semanticProperty[graphElemSemRule.text._name] = graphElem.value;
                 } else {
                     graphElem.semanticProperty[graphElemSemRule.text._name] = graphElem.value;
@@ -284,14 +300,19 @@
             }
         }
 
+        // console.log('TESTING');
+        // let testNode = graph['_KHT4D4PdyE85uSCunmk-2'];
+        // let testPath = "(#attType='exit')::ARROW/PRED/(#attType='exit')::ARROW[@Rel='true']/STAT";
+        // let testResult = this.resolvePath(testNode, testPath);
+        // console.log(testResult);
+        // console.log("END TESTING");
+
         // CALCULATING PRIORITY TABLE
         let visitTable = this.getVisitTable(semanticRules);
-        console.log(visitTable);
-
 
         // ORDERIGN ALL THE NODES
         let orderedGraph = this.applyVisitTable(new_graph, visitTable);
-        console.log(orderedGraph);
+        console.info('orderedGraph', this.printGraph(orderedGraph));
 
         // CALCULATING ALL THE PROPERTIES
         for (let elem in orderedGraph) {
@@ -323,106 +344,177 @@
                 }
             }
         }
-
     }
 
     /**
      * Apply the visit table to the graph
      */
     CheckUtil.prototype.applyVisitTable = function (graph, visitTable) {
-        let PATHS = visitTable.map((elem) => {
-            return {
-                "ref": elem.ref,
-                "paths": elem.paths
-            }
-        });
         let N = Object.values(graph).sort((a, b) => {
-            return visitTable.find((elem) => {
-                return elem.ref == a.name;
-            }).order - visitTable.find((elem) => {
-                return elem.ref == b.name;
-            }).order;
+            return visitTable[a.name].order - visitTable[b.name].order;
         });
 
         let L = [];
-        while (!N.length) {
-            let rem = N[0];
-            N = N.filter((elem) => {
-                if (elem.id == rem.id) return false
-            });
-            console.log(N);
+        let nodes = [];
+        while (N.length != 0) {
+            let rem = N.shift();
             L.push(rem);
-            let nodes = [];
-            this.followPath(rem, graph, N, PATHS, nodes);
-            L.concat(nodes);
+            nodes = this.followPath(rem, graph, N, visitTable, nodes);
+            L = L.concat(nodes);
             N = N.filter((i) => {
                 return nodes.indexOf(i) < 0;
             });
         }
-        L.sort((a, b) => {
 
-            if (visitTable.find((elem) => {
-                return elem.ref == a.name;
-            }).priority > visitTable.find((elem) => {
-                return elem.ref == b.name;
-            }).priority) return 1;
-            if (visitTable.find((elem) => {
-                return elem.ref == a.name;
-            }).priority < visitTable.find((elem) => {
-                return elem.ref == b.name;
-            }).priority) return -1;
+        L = this.stableSort(L, (a, b) => {
+            if (visitTable[a.name].priority > visitTable[b.name].priority) {
+                return 1;
+            }
+            if (visitTable[a.name].priority < visitTable[b.name].priority) {
+                return -1;
+            }
         });
         return L;
     }
 
-    CheckUtil.prototype.isEdgeSelector = function (pathStep) {
-        let regex = /(\(#att([a-z]+)='([a-z]+)'\)::)?([a-z]+)+(\[(@[a-z]+)='([a-z]+)'\])?/i;
+    /**
+     * Retrieve components of a path step
+     */
+    CheckUtil.prototype.scorporatePathStep = function (pathStep) {
+        let regex = /(\(#att([a-z]+)\s*=\s*'([a-z]+)'\)::)?(([a-z]+)+|\*)(\[(@[a-z]+)\s*=\s*'([a-z]+)'\])?$/i;
+        if (regex.test(pathStep)) {
+            let regexApply = pathStep.match(regex);
+            return {
+                axis: regexApply[1] ? regexApply[1] : "",
+                axisProperty: regexApply[2] ? regexApply[2] : "",
+                axisValue: regexApply[3] ? regexApply[3] : "",
+                nodeToReach: regexApply[4] ? regexApply[4] : "",
+                predicate: regexApply[6] ? regexApply[6] : "",
+                predicateProperty: regexApply[7] ? regexApply[7] : "",
+                predicateValue: regexApply[8] ? regexApply[8] : ""
+            }
+        } else {
+            console.error('Incorrect Path: ' + pathStep);
+        }
     }
 
     /**
      * Resolve path step
      */
-    CheckUtil.prototype.resolvePathStep = function (node, pathStep) {
-        console.log(pathStep);
+    CheckUtil.prototype.resolvePathStep = function (nodes, pathStep) {
+        let pathStepElements = this.scorporatePathStep(pathStep);
+        console.info('pathStep', pathStep, pathStepElements);
 
+        let selectedElements = [];
+        let nodesToReturn = [];
+
+        for (let elem in nodes) {
+            let node = nodes[elem];
+            console.log(node.id);
+            if (node.isEdge()) {
+                console.log('RESOLVING EDGE PATH');
+
+                selectedElements.push(node.source);
+                selectedElements.push(node.target);
+                if (pathStepElements.axis) {
+                    selectedElements = [window["CheckUtil"]["prototype"]["getNodeByAP" + pathStepElements.axisProperty](this, node, pathStepElements.axisValue).node];
+                }
+                if (pathStepElements.nodeToReach) {
+
+                    if (pathStepElements.nodeToReach == '*') {
+                        // nodesToReturn = nodesToReturn.concat(selectedElements);
+                    } else {
+                        selectedElements = selectedElements.filter((elem) => {
+                            return elem.name.toUpperCase() == pathStepElements.nodeToReach.toUpperCase()
+                        });
+                    }
+                }
+                if (pathStepElements.predicate) {
+
+                    selectedElements = selectedElements.filter((elem) => {
+                        return elem.semanticProperty[pathStepElements.predicateProperty.substr(1)] == pathStepElements.predicateValue;
+                    });
+
+                }
+                console.info('selectedElements', selectedElements);
+                nodesToReturn = nodesToReturn.concat(selectedElements);
+            } else {
+                console.log('RESOLVING NODE PATH');
+
+                let adiacentEdges = node.edges;
+                selectedElements = adiacentEdges;
+                if (pathStepElements.nodeToReach == '*') {
+                    nodesToReturn = nodesToReturn.concat(selectedElements);
+                } else {
+                    if (pathStepElements.axis) {
+                        
+                        selectedElements = window["CheckUtil"]["prototype"]["getEdgesByAP" + pathStepElements.axisProperty](this, node);
+                        selectedElements = selectedElements[pathStepElements.axisValue];
+                    }
+                    if (pathStepElements.nodeToReach) {
+
+                        selectedElements = selectedElements.filter((elem) => {
+                            return elem.name.toUpperCase() == pathStepElements.nodeToReach.toUpperCase()
+                        });
+                    }
+                    if (pathStepElements.predicate) {
+
+                        selectedElements = selectedElements.filter((elem) => {
+                            return elem.semanticProperty[pathStepElements.predicateProperty.substr(1)] == pathStepElements.predicateValue;
+                        });
+                    }
+                    nodesToReturn = nodesToReturn.concat(selectedElements);
+                }
+            }
+        }
+        return nodesToReturn;
     }
 
     /**
      * Resolve path
      */
     CheckUtil.prototype.resolvePath = function (node, path) {
-
+        console.info('node, path', node, path);
+        let nodes = [];
+        nodes = nodes.concat(node);
+        let splittedPath = path.split('/');
+        for (let elem in splittedPath) {
+            let pathStep = splittedPath[elem];
+            nodes = this.resolvePathStep(nodes, pathStep);
+        }
+        return nodes;
     }
 
     /**
      * Follow the path from a node
-     * 
-     * \[follAtt[a-zA-Z]+\=\'[a-zA-Z]+\'\]
      */
     CheckUtil.prototype.followPath = function (node, G, N, PTPATHS, nodes) {
         let nname = node.name;
-        let npaths = PTPATHS[nname];
+        let npaths = PTPATHS[nname].paths;
         for (let elem in npaths) {
             let npath = npaths[elem];
-            let nds = this.resolvePath(node, npath);
+            let nds = this.resolvePath(node, npath._value);
             nds = nds.filter((i) => {
                 return nodes.indexOf(i) < 0;
             });
             nds = nds.filter((i) => {
-                return !N.indexOf(i) < 0;
+                return N.indexOf(i) > -1;
             });
-            if (npath.flag == 'B') {
-                nodes.concat(nds)
+
+            if (npath._flag == 'B') {
+                nodes = nodes.concat(nds);
             }
             for (let elem in nds) {
                 let n = nds[elem];
-                if (npath.flag == 'D') {
+                if (npath._flag == 'D') {
                     if (nodes.indexOf(n) < 0) {
-                        nodes.push(n)
+                        nodes.push(n);
                     }
                 }
+                nodes = this.followPath(n, G, N, PTPATHS, nodes);
             }
         }
+        return nodes;
     }
 
     /**
@@ -448,8 +540,41 @@
                 })
             }
         }
-        return visits.sort((a, b) => {
+        visits = visits.sort((a, b) => {
             return a.order - b.order
+        });
+
+        visitObj = {};
+        for (let elem in visits) {
+            let visit = visits[elem];
+            visitObj[visit.ref] = visit;
+        }
+        return visitObj;
+    }
+
+    /**
+     * Get the node by AP Name
+     */
+    CheckUtil.prototype.getNodeByAPName = function (thos, edge, APName) {
+        let APs = thos.getCapsRefsWithNode(edge);
+
+        let capName = edge.rules.cap.find((c) => {
+            return c._name.toUpperCase() == APName.toUpperCase();
+        })._type;
+
+        return APs.find((elem) => {
+            return elem.ref.toUpperCase() == capName.toUpperCase();
+        });
+    }
+
+    /**
+     * Get the node by AP Type
+     */
+    CheckUtil.prototype.getNodeByAPType = function (thos, edge, APType) {
+        let APs = thos.getCapsRefsWithNode(edge);
+
+        return APs.find((elem) => {
+            return elem.ref.toUpperCase() == APType.toUpperCase();
         });
     }
 
@@ -476,6 +601,39 @@
                 let entryX = edgeState.style.entryX;
                 let entryY = edgeState.style.entryY;
                 let b = this.getSymAPConstraintName(targetState, entryX, entryY);
+                edges[b].push(edge);
+            }
+        }
+        return edges;
+    }
+
+    /**
+     * Get all the edge collected by AP Type
+     */
+    CheckUtil.prototype.getEdgesByAPType = function (thos, symbol) {
+        let edges = {};
+        for (let elem in symbol.rules.ap) {
+            let constraint = symbol.rules.ap[elem];
+            edges[constraint._type] = [];
+        }
+        for (let elem in symbol.edges) {
+            let edge = symbol.edges[elem];
+            let edgeState = thos.editorUi.editor.graph.view.getState(edge);
+
+            let sourceState = thos.editorUi.editor.graph.view.getState(edge.source);
+
+            let targetState = thos.editorUi.editor.graph.view.getState(edge.target);
+
+            if (edge.source.id == symbol.id) {
+                let exitX = edgeState.style.exitX;
+                let exitY = edgeState.style.exitY;
+                let a = thos.getSymAPConstraintType(sourceState, exitX, exitY);
+                edges[a].push(edge);
+
+            } else if (edge.target.id == symbol.id) {
+                let entryX = edgeState.style.entryX;
+                let entryY = edgeState.style.entryY;
+                let b = thos.getSymAPConstraintType(targetState, entryX, entryY);
                 edges[b].push(edge);
             }
         }
@@ -512,6 +670,17 @@
     }
 
     /**
+     * Get AP constraint type
+     */
+    CheckUtil.prototype.getSymAPConstraintType = function (symbolState, x, y) {
+        let myPoint = new mxPoint(x, y);
+        let name = symbolState.shape.stencil.constraints.find((constraint) => {
+            return constraint.point.equals(myPoint);
+        }).name;
+        return this.aliases[symbolState.cell.rules._ref][name];
+    }
+
+    /**
      * Get connector attaching points type
      */
     CheckUtil.prototype.getCapsRefs = function (connector, connectorState) {
@@ -531,7 +700,38 @@
         let targetGraphRef = targetState.shape.stencil.desc.attributes.graphicRef.value;
 
         return [this.aliases[sourceGraphRef][sourceAPConstraintName], this.aliases[targetGraphRef][targetAPConstraintName]];
+    }
 
+    /**
+     * Get connector attaching points type, with nodes
+     */
+    CheckUtil.prototype.getCapsRefsWithNode = function (connector, connectorState) {
+        connectorState = connectorState ? connectorState : this.editorUi.editor.graph.view.getState(connector);
+        let sourceState = this.editorUi.editor.graph.view.getState(connector.source);
+        let targetState = this.editorUi.editor.graph.view.getState(connector.target);
+
+        let exitX = connectorState.style.exitX;
+        let exitY = connectorState.style.exitY;
+
+        let entryX = connectorState.style.entryX;
+        let entryY = connectorState.style.entryY;
+
+        let sourceAPConstraintName = this.getSymAPConstraintName(sourceState, exitX, exitY);
+        let targetAPConstraintName = this.getSymAPConstraintName(targetState, entryX, entryY);
+
+        let sourceGraphRef = sourceState.shape.stencil.desc.attributes.graphicRef.value;
+        let targetGraphRef = targetState.shape.stencil.desc.attributes.graphicRef.value;
+
+        return [
+            {
+                node: connector.source,
+                ref: this.aliases[sourceGraphRef][sourceAPConstraintName]
+            },
+            {
+                node: connector.target,
+                ref: this.aliases[targetGraphRef][targetAPConstraintName]
+            }
+        ];
     }
 
     /**
@@ -606,7 +806,7 @@
 
     /** SEMANTIC RULES FUNCTIONS */
     CheckUtil.prototype.assign = function (graphElem, propertyName, param, path = "") {
-        if (!path) {
+        if (path) {
             console.log('PATH HERE!');
             let pathResult = this.followPath(graphElem, path)[0];
             pathResult.semanticProperty[propertyName] = param;
@@ -619,5 +819,31 @@
     CheckUtil.prototype.exist = function () { }
     CheckUtil.prototype.add = function () { }
     CheckUtil.prototype.addAll = function () { }
+
+    CheckUtil.prototype.stableSort = function (array, cmp) {
+        cmp = !!cmp ? cmp : (a, b) => {
+            if (a < b) return -1;
+            if (a > b) return 1;
+            return 0;
+        };
+        let stabilizedThis = array.map((el, index) => [el, index]);
+        let stableCmp = (a, b) => {
+            let order = cmp(a[0], b[0]);
+            if (order != 0) return order;
+            return a[1] - b[1];
+        }
+        stabilizedThis.sort(stableCmp);
+        for (let i = 0; i < array.length; i++) {
+            array[i] = stabilizedThis[i][0];
+        }
+        return array;
+    }
+
+    CheckUtil.prototype.printGraph = function (graph) {
+        if (Array.isArray(graph))
+            return graph.map((cell) => { return cell.id });
+        else
+            return Object.keys(graph);
+    }
 
 })();
