@@ -6,7 +6,7 @@
      * - NEED TO STORE INFO ABOUNT AP NAME, TYPE, REF [OK]
      * - NEED TO SEPARATE INFO FOR SEMANTIC PURPOSE [OK]
      * - IMPLEMENT followPath FUNCTION [OK]
-     * - MOVE NODE TEXT INFO INTO THE DEFINITION FROM THE SEMANTIC DEFINITION (LOOK THE PAPAER)
+     * - MOVE NODE TEXT INFO INTO THE DEFINITION FROM THE SEMANTIC DEFINITION (LOOK THE PAPAER) [OK]
      * - IMPLEMENT getNodeByAPName AND getNodeByAPType [OK]
      */
 
@@ -49,27 +49,34 @@
         console.info('semanticRules', semanticRules);
 
         console.log("#############################################");
-
         console.log("%cRe-arranging the label...", "color: red;");
+        console.group('ARRANGING LABEL');
         this.arrangeLabel(graph);
+        console.groupEnd();
         console.log("%cThe label are arranged!", "color: red;");
 
         console.log("#############################################");
 
         console.log("%cRemoving the ambiguity...", "color: orange;");
+        console.group('REMOVING AMBIGUITY');
         this.removeAmbiguity(graph, rules);
+        console.groupEnd();
         console.log("%cThe ambiguity are removed!", "color: orange;");
 
         console.log("#############################################");
 
         console.log("%cAppling the rules...", "color: yellow;");
+        console.group('APPLING THE RULES');
         this.applyRules(graph, rules);
+        console.groupEnd();
         console.log('%cRules applied!', "color: yellow;");
 
         console.log("#############################################");
 
         console.log("%cAppling the semantic rules...", "color: green;");
-        this.applySemanticRules(graph, semanticRules);
+        console.group('APPLING SEMANTIC RULES');
+        console.log(this.applySemanticRules(graph, semanticRules));
+        console.groupEnd();
         console.log('%cSemantic rules applied!', "color: green;");
 
         console.log("#############################################");
@@ -192,7 +199,16 @@
             if (this.allRefMap[elemGraphRef].length == 1) {
                 graphElem.name = this.allRefMap[elemGraphRef][0]._name;
                 console.log(graphElem.id + " is a " + graphElem.name + "!");
-                graphElem.rules = rulesByName[graphElem.name];
+                let graphElemRules = rulesByName[graphElem.name];
+                graphElem.rules = graphElemRules;
+                graphElem.semanticProperty = {};
+                if (graphElemRules.text) {
+                    if (graphElemRules.text._type && graphElemRules.text._type.charAt(0) == '(') {
+                        graphElem.semanticProperty[graphElemRules.text._name] = graphElem.value;
+                    } else {
+                        graphElem.semanticProperty[graphElemRules.text._name] = graphElem.value;
+                    }
+                }
                 for (let vertex in this.allRefMap[elemGraphRef][0].ap) {
                     let ref = this.allRefMap[elemGraphRef][0].ap[vertex];
                     this.aliases[elemGraphRef][ref._ref] = ref._type;
@@ -213,7 +229,16 @@
                     if (correct) {
                         graphElem.name = token._name;
                         console.log(graphElem.id + " is a " + token._name + "!");
-                        graphElem.rules = rulesByName[graphElem.name];
+                        let graphElemRules = rulesByName[graphElem.name];
+                        graphElem.rules = graphElemRules;
+                        graphElem.semanticProperty = {};
+                        if (graphElemRules.text) {
+                            if (graphElemRules.text._type && graphElemRules.text._type.charAt(0) == '(') {
+                                graphElem.semanticProperty[graphElemRules.text._name] = graphElem.value;
+                            } else {
+                                graphElem.semanticProperty[graphElemRules.text._name] = graphElem.value;
+                            }
+                        }
                         for (let vertex in this.allRefMap[elemGraphRef][0].ap) {
                             let ref = this.allRefMap[elemGraphRef][0].ap[vertex];
                             this.aliases[elemGraphRef][ref._ref] = ref._type;
@@ -242,7 +267,16 @@
                 this.errors.push({ 'error': 'Edge with null attaching point!', 'elem': graphElem });
             if (this.allRefMap[elemGraphRef].length == 1) {
                 graphElem.name = this.allRefMap[elemGraphRef][0]._name;
-                graphElem.rules = rulesByName[graphElem.name];
+                let graphElemRules = rulesByName[graphElem.name];
+                graphElem.rules = graphElemRules;
+                graphElem.semanticProperty = {};
+                if (graphElemRules.text) {
+                    if (graphElemRules.text._type && graphElemRules.text._type.charAt(0) == '(') {
+                        graphElem.semanticProperty[graphElemRules.text._name] = graphElem.value;
+                    } else {
+                        graphElem.semanticProperty[graphElemRules.text._name] = graphElem.value;
+                    }
+                }
                 console.log(graphElem.id + " is a " + graphElem.name + "!");
             } else {
                 console.log('Ambiguity detected...\nResolving...');
@@ -253,7 +287,16 @@
                     if (caps.sort()[0] == myCaps.sort()[0] && caps.sort()[1] == myCaps.sort()[1]) {
                         graphElem.name = elemCap._name;
                         console.log(graphElem.id + " is a " + graphElem.name + "!");
-                        graphElem.rules = rulesByName[graphElem.name];
+                        let graphElemRules = rulesByName[graphElem.name];
+                        graphElem.rules = graphElemRules;
+                        graphElem.semanticProperty = {};
+                        if (graphElemRules.text) {
+                            if (graphElemRules.text._type && graphElemRules.text._type.charAt(0) == '(') {
+                                graphElem.semanticProperty[graphElemRules.text._name] = graphElem.value;
+                            } else {
+                                graphElem.semanticProperty[graphElemRules.text._name] = graphElem.value;
+                            }
+                        }
                         continue check_for;
                     }
                 }
@@ -284,66 +327,68 @@
             return true;
         }
 
-        // CALCULATING TEXT NAME PROPERTY by graphicRef
-        for (let elem in new_graph) {
-            let graphElem = new_graph[elem];
-            let graphElemSemRule = semanticRules.language.semantic[graphElem.name];
-
-            graphElem.semanticProperty = {};
-
-            if (graphElemSemRule.text) {
-                if (graphElemSemRule.text._type && graphElemSemRule.text._type.charAt(0) == '(') {
-                    graphElem.semanticProperty[graphElemSemRule.text._name] = graphElem.value;
-                } else {
-                    graphElem.semanticProperty[graphElemSemRule.text._name] = graphElem.value;
-                }
-            }
-        }
-
-        // console.log('TESTING');
-        // let testNode = graph['_KHT4D4PdyE85uSCunmk-2'];
-        // let testPath = "(#attType='exit')::ARROW/PRED/(#attType='exit')::ARROW[@Rel='true']/STAT";
-        // let testResult = this.resolvePath(testNode, testPath);
-        // console.log(testResult);
-        // console.log("END TESTING");
-
         // CALCULATING PRIORITY TABLE
         let visitTable = this.getVisitTable(semanticRules);
 
         // ORDERIGN ALL THE NODES
+        console.group('APPLING VISIT TABLE');
         let orderedGraph = this.applyVisitTable(new_graph, visitTable);
         console.info('orderedGraph', this.printGraph(orderedGraph));
+        console.groupEnd();
 
+        console.group('CALCULATING ALL THE PROPERTIES');
         // CALCULATING ALL THE PROPERTIES
-        for (let elem in orderedGraph) {
-            let graphSymbol = orderedGraph[elem];
-            let graphSymbolSemanticRule = semanticRules.language.semantic[graphSymbol.name];
-            console.log("\n\nCalculating the properties of: ", graphSymbol.name, graphSymbol.id, graphSymbolSemanticRule);
-            for (let elem in graphSymbolSemanticRule.property) {
-                let elemProperty = graphSymbolSemanticRule.property[elem];
-                for (let elem in elemProperty.procedure) {
-                    let propertyFunction = elemProperty.procedure[elem];
-                    switch (propertyFunction._name) {
-                        case 'assign':
-                            this.assign(graphSymbol, elemProperty._name, propertyFunction._param, propertyFunction._path);
-                            break;
-                        case 'print':
-                            break;
-                        case 'size':
-                            break;
-                        case 'exist':
-                            break;
-                        case 'isset':
-                            break;
-                        case 'add':
-                            break;
-                        default:
-                            console.log('non dovrei essere qui', propertyFunction._name);
-                            break;
-                    }
+        prop_for: for (let elem in orderedGraph) {
+            let x = orderedGraph[elem];
+            let arePropertyCalculated = this.calculateProperties(x, semanticRules.language.semantic[x.name]);
+            if (!arePropertyCalculated) {
+                if (!orderedGraph[elem + 1]) {
+                    return false;
+                } else {
+                    elem++;
+                    continue prop_for;
+                }
+            } else {
+                if (arePropertyCalculated) {
+                    orderedGraph.splice(elem, 1);
                 }
             }
         }
+        console.groupEnd();
+    }
+
+    /**
+     * Calulate node properties
+     */
+    CheckUtil.prototype.calculateProperties = function (node, rules) {
+        console.group('CALCULATING PROPERTY OF ' + node.id + ": " + node.name);
+        console.log("Calculating the properties of: ", node.name, node.id, rules);
+        for (let elem in rules.property) {
+            let elemProperty = rules.property[elem];
+            for (let elem in elemProperty.procedure) {
+                let propertyProcedure = elemProperty.procedure[elem];
+                switch (propertyProcedure._name) {
+                    case 'assign':
+                        this.assign(node, elemProperty._name, propertyProcedure._param, propertyProcedure._path);
+                        break;
+                    case 'print':
+                        break;
+                    case 'size':
+                        break;
+                    case 'exist':
+                        break;
+                    case 'isset':
+                        break;
+                    case 'add':
+                        break;
+                    default:
+                        console.log('non dovrei essere qui', propertyProcedure._name);
+                        break;
+                }
+            }
+        }
+        console.groupEnd();
+        return true;
     }
 
     /**
@@ -447,7 +492,7 @@
                     nodesToReturn = nodesToReturn.concat(selectedElements);
                 } else {
                     if (pathStepElements.axis) {
-                        
+
                         selectedElements = window["CheckUtil"]["prototype"]["getEdgesByAP" + pathStepElements.axisProperty](this, node);
                         selectedElements = selectedElements[pathStepElements.axisValue];
                     }
@@ -474,6 +519,7 @@
      * Resolve path
      */
     CheckUtil.prototype.resolvePath = function (node, path) {
+        console.group('RESOLVING A PATH FOR: ' + node.id);
         console.info('node, path', node, path);
         let nodes = [];
         nodes = nodes.concat(node);
@@ -482,6 +528,7 @@
             let pathStep = splittedPath[elem];
             nodes = this.resolvePathStep(nodes, pathStep);
         }
+        console.groupEnd();
         return nodes;
     }
 
@@ -808,7 +855,7 @@
     CheckUtil.prototype.assign = function (graphElem, propertyName, param, path = "") {
         if (path) {
             console.log('PATH HERE!');
-            let pathResult = this.followPath(graphElem, path)[0];
+            let pathResult = this.resolvePath(graphElem, path)[0];
             pathResult.semanticProperty[propertyName] = param;
         } else {
             graphElem.semanticProperty[propertyName] = param;
