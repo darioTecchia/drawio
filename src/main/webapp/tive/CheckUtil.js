@@ -8,9 +8,10 @@
      * - IMPLEMENT followPath FUNCTION [OK]
      * - MOVE NODE TEXT INFO INTO THE DEFINITION FROM THE SEMANTIC DEFINITION (LOOK THE PAPAER) [OK]
      * - IMPLEMENT getNodeByAPName AND getNodeByAPType [OK]
-     * - RENAME ALL CAP IN AP
+     * - RENAME ALL CAP IN AP [OK]
      * - DELETE _ref FIELD
-     * - TEXT MUST BE AN ARRAYs
+     * - TEXT MUST BE AN ARRAY [OK]
+     * - IMPLEMENT postCondition FOR ALL FUCTION
      */
 
     /** RULES FUNCTIONS */
@@ -19,6 +20,28 @@
     }
     function numLoop(ApName) {
         // TODO
+    }
+
+    var wnd = null;
+
+    print = function (str) {
+
+        console.log(wnd);
+
+        if (!wnd) {
+            wnd = new mxWindow('Console', document.createElement('div'), 300, 50, 200, null, true, true);
+            wnd.destroyOnClose = false;
+            wnd.setMaximizable(true);
+            wnd.setScrollable(true);
+            wnd.setResizable(true);
+            wnd.setClosable(true);
+            wnd.setVisible(false);
+        }
+
+        console.info("STRINGA", str);
+
+        wnd.contentWrapper.innerHTML = wnd.contentWrapper.innerHTML + str;
+        wnd.show()
     }
 
     CheckUtil = function (editorUi) {
@@ -46,6 +69,10 @@
             delete graphElem.semanticProperty
         }
         this.errors = [];
+
+        if (wnd) {
+            wnd.contentWrapper.innerHTML = "<br/>";
+        }
 
         console.log("%cRules", "color: blue;");
         console.info('graph', graph);
@@ -352,7 +379,7 @@
 
         let loopCounter = 0;
 
-        while (L.length != 0) {
+        extnernal: while (L.length != 0) {
 
             if (++loopCounter == 100) {
                 console.log('loop');
@@ -365,10 +392,6 @@
                 let xRules = semanticRules[x.name];
                 let propertyToCalculate = xRules.property.length;
 
-                if (++loopCounter == 100) {
-                    console.log('loop');
-                    return false;
-                }
                 let calculatedProperties = this.calculateProperties(x, xRules);
                 console.log("CALCULATED: " + calculatedProperties);
                 console.log("TO CALCULATE: " + propertyToCalculate);
@@ -522,37 +545,36 @@
                     });
 
                 }
-                console.info('selectedElements', selectedElements);
                 nodesToReturn = nodesToReturn.concat(selectedElements);
             } else {
                 console.log('RESOLVING NODE PATH');
 
                 let adiacentEdges = node.edges;
                 selectedElements = adiacentEdges;
-                if (pathStepElements.nodeToReach == '*') {
-                    nodesToReturn = nodesToReturn.concat(selectedElements);
-                } else {
-                    if (pathStepElements.axis) {
+                if (pathStepElements.axis) {
 
-                        selectedElements = window["CheckUtil"]["prototype"]["newGetEdgesByAP" + pathStepElements.axisProperty](this, node);
-                        selectedElements = selectedElements[pathStepElements.axisValue];
-                    }
-                    if (pathStepElements.nodeToReach) {
+                    selectedElements = window["CheckUtil"]["prototype"]["newGetEdgesByAP" + pathStepElements.axisProperty](this, node);
+                    selectedElements = selectedElements[pathStepElements.axisValue];
+                }
+                if (pathStepElements.nodeToReach) {
+                    if (pathStepElements.nodeToReach == '*') {
 
+                    } else {
                         selectedElements = selectedElements.filter((elem) => {
                             return elem.name.toUpperCase() == pathStepElements.nodeToReach.toUpperCase()
                         });
                     }
-                    if (pathStepElements.predicate) {
-
-                        selectedElements = selectedElements.filter((elem) => {
-                            return elem.semanticProperty[pathStepElements.predicateProperty.substr(1)] == pathStepElements.predicateValue;
-                        });
-                    }
-                    nodesToReturn = nodesToReturn.concat(selectedElements);
                 }
+                if (pathStepElements.predicate) {
+
+                    selectedElements = selectedElements.filter((elem) => {
+                        return elem.semanticProperty[pathStepElements.predicateProperty.substr(1)] == pathStepElements.predicateValue;
+                    });
+                }
+                nodesToReturn = nodesToReturn.concat(selectedElements);
             }
         }
+        console.info('nodesToReturn', nodesToReturn);
         return nodesToReturn;
     }
 
@@ -942,11 +964,70 @@
         return graphElem.semanticProperty[propertyName]
     }
 
+    /**
+     * Check the vars and execute the action
+     */
     CheckUtil.prototype.executeAction = function (graphElem, action) {
 
-        console.log(action);
+        let rawAction = String.raw`` + action;
 
-        return true;
+        let elemPropertyRegex = new RegExp(/\#[a-z]+/gi);
+        let semanticPropertyRegex = new RegExp(/\$[a-z]+/gi);
+        let textPropertyRegex = new RegExp(/@[a-z]+/gi);
+
+        let neededElemProperties = rawAction.match(elemPropertyRegex) ? rawAction.match(elemPropertyRegex) : [];
+        neededElemProperties = neededElemProperties.filter((property) => {
+            return (property == "#id" || property == "#name")
+        });
+        let neededSemanticProperties = rawAction.match(semanticPropertyRegex) ? rawAction.match(semanticPropertyRegex) : [];
+        let neededTextProperties = rawAction.match(textPropertyRegex) ? rawAction.match(textPropertyRegex) : [];
+
+        let elemPropertyRegexSub = new RegExp(/\#([a-z]+)/gi);
+        let semanticPropertyRegexSub = new RegExp(/\$([a-z]+)/gi);
+        let textPropertyRegexSub = new RegExp(/@([a-z]+)/gi);
+
+        let newLineRegex = new RegExp(/\\n/g);
+
+        rawAction = rawAction.replace(newLineRegex, '</br>');
+
+        console.log(neededElemProperties, neededSemanticProperties, neededTextProperties);
+
+        if (neededSemanticProperties.length == 0 && neededTextProperties.length == 0 && neededElemProperties.length == 0) {
+            eval(rawAction);
+            console.info('RAW ACTION', rawAction);
+            console.log('SIMPLE EVAL');
+
+            return true;
+        } else {
+
+            for (let elem in neededElemProperties) {
+                let neededElemProperty = neededElemProperties[elem].slice(1);
+                if (!graphElem[neededElemProperty]) {
+                    return false;
+                }
+            }
+            for (let elem in neededSemanticProperties) {
+                let neededSemanticProperty = neededSemanticProperties[elem];
+                if (!graphElem.semanticProperty[neededSemanticProperty]) {
+                    return false;
+                }
+            }
+            for (let elem in neededTextProperties) {
+                let neededTextProperty = neededTextProperties[elem].slice(1);
+                if (!graphElem[neededTextProperty]) {
+                    return false;
+                }
+            }
+
+
+            rawAction = rawAction.replace(elemPropertyRegexSub, "graphElem[\"$1\"]")
+                .replace(semanticPropertyRegexSub, "graphElem.semanticProperty[\"$1\"]")
+                .replace(textPropertyRegexSub, "graphElem.semanticProperty[\"$1\"]");
+            console.log('SUB EVAL');
+            console.info('RAW ACTION', rawAction);
+            eval(rawAction);
+            return true;
+        }
     }
 
     CheckUtil.prototype.size = function (thos, graphElem, propertyName, param, path = "", postCondition = "") {
