@@ -390,16 +390,16 @@
 
             let x = L[0];
 
-            internal: while (true) {
+            internal: while(true) {
                 console.log(x);
-
+                
                 let xRules = semanticRules[x.name];
                 let propertyToCalculate = xRules.property.length;
-
+    
                 let calculatedProperties = this.calculateProperties(x, xRules);
                 console.log("CALCULATED: " + calculatedProperties);
                 console.log("TO CALCULATE: " + propertyToCalculate);
-
+    
                 if (calculatedProperties == 0) {
                     if (!L[1]) {
                         return false;
@@ -417,38 +417,6 @@
                     continue external;
                 }
             }
-
-
-            // inner: for (let elem in L) {
-            //     if (++loopCounter == 100) {
-            //         console.log('loop');
-            //         return false;
-            //     }
-            //     let x = L[elem];
-            //     console.log(x);
-
-            //     let xRules = semanticRules[x.name];
-            //     let propertyToCalculate = xRules.property.length;
-
-            //     let calculatedProperties = this.calculateProperties(x, xRules);
-            //     console.log("CALCULATED: " + calculatedProperties);
-            //     console.log("TO CALCULATE: " + propertyToCalculate);
-
-            //     if (calculatedProperties == 0) {
-            //         if (!L[elem + 1]) {
-            //             return false;
-            //         } else {
-            //             continue inner;
-            //         }
-            //     } else {
-            //         x.status = "INCOMPLETE";
-            //         if (calculatedProperties == propertyToCalculate) {
-            //             console.log("PROPERTY CALCULATION FOR " + x.id + " IS COMPLETATED!");
-            //             x.status = "COMPLETE";
-            //             L.shift();
-            //         }
-            //     }
-            // }
         }
         console.groupEnd();
         return true;
