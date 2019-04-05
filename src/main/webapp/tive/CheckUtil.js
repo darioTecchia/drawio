@@ -22,7 +22,7 @@
         // TODO
     }
     var wnd = null;
-    function print (str) {
+    function print(str) {
 
         if (!wnd) {
             wnd = new mxWindow('Console', document.createElement('div'), 300, 50, 400, 600, null, true, true);
@@ -77,7 +77,7 @@
         console.log("%cRe-arranging the label...", "color: red;");
         console.log('ARRANGING LABEL');
         this.arrangeLabel(graph);
-        
+
         console.log("%cThe label are arranged!", "color: red;");
 
         console.log("#############################################");
@@ -85,7 +85,7 @@
         console.log("%cRemoving the ambiguity...", "color: orange;");
         console.log('REMOVING AMBIGUITY');
         this.removeAmbiguity(graph, rules);
-        
+
         console.log("%cThe ambiguity are removed!", "color: orange;");
 
         console.log("#############################################");
@@ -93,7 +93,7 @@
         console.log("%cAppling the rules...", "color: yellow;");
         console.log('APPLING THE RULES');
         this.applyRules(graph, rules);
-        
+
         console.log('%cRules applied!', "color: yellow;");
 
         console.log("#############################################");
@@ -115,10 +115,10 @@
         let orderedGraph = this.applyVisitTable(graph, visitTable);
 
         console.info('orderedGraph', this.printGraph(orderedGraph));
-        
+
         let semanticResult = this.applySemanticRules(orderedGraph, semanticRulesByRef);
         console.log(semanticResult);
-        
+
         console.log('%cSemantic rules applied!', "color: green;");
 
         console.log("#############################################");
@@ -131,6 +131,15 @@
     CheckUtil.prototype.applyRules = function (graph, rules) {
         let vertexs = this.getNodes(graph);
         let edges = this.getEdges(graph);
+
+        if (rules.language.constraint) {
+            if (rules.language.constraint.toUpperCase() == "CONNECTED") {
+                if (!isConnected(graph)) {
+                    this.errors.push("Graph must be connected!");
+                    return false;
+                };
+            }
+        }
 
         for (let elem in rules.language.token) {
             let tokenRule = rules.language.token[elem];
@@ -417,7 +426,7 @@
                 if (this.executeAction(node, elemProperty.action)) {
                     calculatedProperties++;
                 }
-                
+
             } else {
                 console.log('CALCULATING PROPERTY ' + elemProperty._name);
                 for (let elem in elemProperty.procedure) {
@@ -431,15 +440,15 @@
                         propertyProcedure._path,
                         propertyProcedure._postCondition)) {
                         console.log('DIO ANIMALE');
-                        
+
                         continue external_prop;
                     }
-                    
+
                 }
                 calculatedProperties++;
             }
         }
-        
+
         return calculatedProperties;
     }
 
@@ -578,7 +587,7 @@
             let nodes = [];
             nodes = this.followPath(rem, graph, N, visitTable, nodes);
             L = L.concat(nodes);
-            
+
             N = N.filter((i) => {
                 return nodes.indexOf(i) < 0;
             });
