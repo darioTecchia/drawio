@@ -115,27 +115,28 @@ window.mxLanguageMap = window.mxLanguageMap ||
 	'zh-tw' : '繁體中文'
 };
 
-if(urlParams['loadExample']) {
-	let exampleToLoad = urlParams['loadExample'];
-	console.log(exampleToLoad);
-	switch (exampleToLoad) {
-		case 'tree':
-			fetch('EXAMPLES/Tree/newDefinition.json')
-				.then(response => response.json())
-				.then((jsonResponse) => {
-					localStorage.setItem('RULES', JSON.stringify(jsonResponse))
-				})    
-				
-			fetch('EXAMPLES/Tree/newSemanticDefinition.json')
-				.then(response => response.json())
-				.then((jsonResponse) => {
-					localStorage.setItem('SEMANTIC_RULES', JSON.stringify(jsonResponse))
-				})    
-			break;
-	
-		default:
-			break;
-	}
+if(urlParams['loadLanguage']) {
+	let language = urlParams['loadLanguage'];
+	console.log(language);
+	fetch(`EXAMPLES/${language}/newDefinition.json`)
+		.then(response => response.json())
+		.then((jsonResponse) => {
+			localStorage.setItem('RULES', JSON.stringify(jsonResponse))
+		})    
+		
+	fetch(`EXAMPLES/${language}/newSemanticDefinition.json`)
+		.then(response => response.json())
+		.then((jsonResponse) => {
+			localStorage.setItem('SEMANTIC_RULES', JSON.stringify(jsonResponse))
+		})
+
+	fetch(`EXAMPLES/${language}/library.xml`)
+		.then(response => response.text())
+		.then((textResponse) => {
+			localStorage.setItem('.scratchpad', textResponse)
+		})
+
+	console.log(this);
 }
 
 if (typeof window.mxBasePath === 'undefined')
