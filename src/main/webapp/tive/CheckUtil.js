@@ -55,6 +55,9 @@
      * Check if the graph respect all the definition and apply the semantic rules
      */
     CheckUtil.prototype.check = function (graph, rules, semanticRules) {
+
+        console.log(this.editorUi);
+
         delete graph[0];
         delete graph[1];
         for (let elem in graph) {
@@ -150,7 +153,7 @@
             for (let elem in tokenElements) {
                 let tokenElem = tokenElements[elem];
                 let tokenState = this.editorUi.editor.graph.view.getState(tokenElem);
-                let elemGraphRef = tokenState.shape.stencil.desc.attributes.graphicRef.value;
+                let elemGraphRef = tokenState.shape.stencil.desc.attributes.name.value;
 
                 if (!!this.rulesGrafRefs[elemGraphRef].localConstraint) {
                     if (!this.checkSymbolLocalConstraint(tokenElem, tokenState)) {
@@ -178,8 +181,8 @@
 
         let vertexs = this.getNodes(graph);
         let edges = this.getEdges(graph);
-        let parser = new DOMParser();
 
+        let parser = new DOMParser();
         let stencils = localStorage.getItem('STENCIL');
         let stencilsXML = parser.parseFromString(stencils, 'application/xml');
 
@@ -189,23 +192,38 @@
         let shapesCollection = Array.from(stencilsXML.getElementsByTagName('shape'));
         let connectorsCollection = Array.from(connectorsXML.getElementsByTagName('connector'));
 
-        let allStencilsGrafRef = shapesCollection.map((elem) => {
+        // let allStencilsGrafRef = shapesCollection.map((elem) => {
+        //     return {
+        //         'graphicRef': elem.getAttribute('graphicRef'),
+        //         'name': elem.getAttribute('name')
+        //     };
+        // }).concat(connectorsCollection.map((elem) => {
+        //     return {
+        //         'graphicRef': elem.getAttribute('graphicRef'),
+        //         'name': 'Line'
+        //     };
+        // }));
+
+        let allStencilsGrafRef = rules.language.token.map((elem) => {
             return {
-                'graphicRef': elem.getAttribute('graphicRef'),
-                'name': elem.getAttribute('name')
-            };
-        }).concat(connectorsCollection.map((elem) => {
+                'graphicRef': elem._ref,
+                'name': elem._name
+            }
+        }).concat(rules.language.connector.map((elem) => {
             return {
-                'graphicRef': elem.getAttribute('graphicRef'),
-                'name': 'Line'
-            };
+                'graphicRef': elem._ref,
+                'name': elem._name
+            }
         }));
+
+        console.log(allStencilsGrafRef);
+        
 
         for (grafRef in allStencilsGrafRef) {
             this.allRefMap[allStencilsGrafRef[grafRef].graphicRef] = [];
         }
         this.aliases = JSON.parse(JSON.stringify(this.allRefMap));
-        for (elem in rules.language.token) {
+        for (let elem in rules.language.token) {
             let token = rules.language.token[elem];
             this.allRefMap[token._ref].push(token);
         }
@@ -243,8 +261,11 @@
             let graphElem = vertexs[vertex];
             let elemState = this.editorUi.editor.graph.view.getState(graphElem);
             this.changeShapeColor(graphElem, 'black');
-            let elemGraphRef = elemState.shape.stencil.desc.attributes.graphicRef.value;
-
+            console.log(elemState);
+            
+            let elemGraphRef = elemState.shape.stencil.desc.attributes.name.value;
+            console.log(this.allRefMap, elemGraphRef);
+            
             if (this.allRefMap[elemGraphRef].length == 1) {
                 graphElem.name = this.allRefMap[elemGraphRef][0]._name;
                 console.log(graphElem.id + " is a " + graphElem.name + "!");
@@ -824,7 +845,7 @@
      * check symbol local contraint
      */
     CheckUtil.prototype.checkSymbolLocalConstraint = function (symbol, symbolState) {
-        let elemGraphRef = symbolState.shape.stencil.desc.attributes.graphicRef.value;
+        let elemGraphRef = symbolState.shape.stencil.desc.attributes.name.value;
         let edgesByApName = this.getEdgesByAPName(symbol, symbolState);
         for (let APName in edgesByApName) {
             window[APName] = edgesByApName[APName];
@@ -872,8 +893,8 @@
         let sourceAPConstraintName = this.getSymAPConstraintName(sourceState, exitX, exitY);
         let targetAPConstraintName = this.getSymAPConstraintName(targetState, entryX, entryY);
 
-        let sourceGraphRef = sourceState.shape.stencil.desc.attributes.graphicRef.value;
-        let targetGraphRef = targetState.shape.stencil.desc.attributes.graphicRef.value;
+        let sourceGraphRef = sourceState.shape.stencil.desc.attributes.name.value;
+        let targetGraphRef = targetState.shape.stencil.desc.attributes.name.value;
 
         console.log(this.aliases);
 
@@ -899,8 +920,8 @@
         let sourceAPConstraintName = this.getSymAPConstraintName(sourceState, exitX, exitY);
         let targetAPConstraintName = this.getSymAPConstraintName(targetState, entryX, entryY);
 
-        let sourceGraphRef = sourceState.shape.stencil.desc.attributes.graphicRef.value;
-        let targetGraphRef = targetState.shape.stencil.desc.attributes.graphicRef.value;
+        let sourceGraphRef = sourceState.shape.stencil.desc.attributes.name.value;
+        let targetGraphRef = targetState.shape.stencil.desc.attributes.name.value;
 
         return [
             {

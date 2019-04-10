@@ -2619,6 +2619,8 @@
 	EditorUi.prototype.loadLibrary = function(file)
 	{
 		var doc = mxUtils.parseXml(file.getData());
+
+		console.log(doc);
 		
 		if (doc.documentElement.nodeName == 'mxlibrary')
 		{
