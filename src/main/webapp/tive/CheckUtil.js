@@ -37,6 +37,23 @@
         wnd.contentWrapper.innerHTML = wnd.contentWrapper.innerHTML + str;
         wnd.show()
     }
+    function printError(str) {
+
+        if (!wnd) {
+            let elem = document.createElement('div');
+            elem.style.color='red'
+            wnd = new mxWindow('Console', elem, 300, 50, 400, 600, null, true, true);
+            wnd.destroyOnClose = false;
+            wnd.setMaximizable(true);
+            wnd.setScrollable(true);
+            wnd.setResizable(true);
+            wnd.setClosable(true);
+            wnd.setVisible(false);
+        }
+
+        wnd.contentWrapper.innerHTML = wnd.contentWrapper.innerHTML + str;
+        wnd.show()
+    }
 
     CheckUtil = function (editorUi) {
         this.editorUi = editorUi;
@@ -137,6 +154,7 @@
             if (rules.language.constraint.toUpperCase() == "CONNECTED") {
                 if (!isConnected(graph)) {
                     this.errors.push("Graph must be connected!");
+                    printError('Graph must be connected!');
                     return false;
                 };
             }
@@ -149,6 +167,8 @@
             });
             if (!eval(tokenElements.length + tokenRule._occurrences)) {
                 this.errors.push({ 'error': `Error! ${tokenRule._name}'occurrances must be ${tokenRule._occurrences}, but is ${tokenElements.length}`, 'elem': tokenRule });
+                printError(`Error! ${tokenRule._name}'occurrances must be ${tokenRule._occurrences}, but is ${tokenElements.length}`);
+                return false;
             }
             for (let elem in tokenElements) {
                 let tokenElem = tokenElements[elem];
@@ -159,6 +179,8 @@
                     if (!this.checkSymbolLocalConstraint(tokenElem, tokenState)) {
                         this.errors.push({ 'error': `Error! Local Constraint is not respected!`, 'elem': tokenElem });
                         this.changeShapeColor(tokenElem, 'red');
+                        printError(`Error! Local Constraint is not respected!`);
+                        return false;
                     }
                 }
 
@@ -168,6 +190,8 @@
                     if (!eval(edgesByApName[apRule._ref].length + apRule._connectNum)) {
                         this.errors.push({ 'error': `Error! Rules on sybol attacching point are not respected!`, 'elem': tokenElem });
                         this.changeShapeColor(tokenElem, 'red');
+                        printError(`Error! Rules on sybol attacching point are not respected!`);
+                        return false;
                     }
                 }
             }
