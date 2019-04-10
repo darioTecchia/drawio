@@ -239,10 +239,8 @@
             let graphElem = vertexs[vertex];
             let elemState = this.editorUi.editor.graph.view.getState(graphElem);
             this.changeShapeColor(graphElem, 'black');
-            console.log(elemState);
 
             let elemGraphRef = elemState.shape.stencil.desc.attributes.name.value;
-            console.log(this.allRefMap, elemGraphRef);
 
             if (this.allRefMap[elemGraphRef].length == 1) {
                 graphElem.name = this.allRefMap[elemGraphRef][0]._name;

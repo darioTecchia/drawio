@@ -270,7 +270,7 @@
 	/**
 	 * Restores app defaults for UI
 	 */
-	EditorUi.prototype.closableScratchpad = true;
+	EditorUi.prototype.closableScratchpad = false;
 
 	/**
 	 * Capability check for canvas export

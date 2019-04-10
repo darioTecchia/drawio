@@ -423,13 +423,6 @@
 	 */
 	Sidebar.prototype.init = function()
 	{
-
-		if(localStorage.getItem('LIBRARY')) {
-			let library = localStorage.getItem('LIBRARY');
-			let libFile = new LocalLibrary(this.editorUi, library, 'library');
-			this.editorUi.loadLibrary(libFile);
-		}
-
 		// Defines all entries for the sidebar. This is used in the MoreShapes dialog. Create screenshots using the savesidebar URL parameter and
 		// http://www.alderg.com/merge.html for creating a vertical stack of PNG images if multiple sidebars are part of an entry.
 		this.entries = [{title: mxResources.get('standard'),
