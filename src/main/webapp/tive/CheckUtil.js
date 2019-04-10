@@ -77,7 +77,7 @@
         console.log("%cRe-arranging the label...", "color: red;");
         console.log('ARRANGING LABEL');
         this.arrangeLabel(graph);
-
+        this.printErrors();
         console.log("%cThe label are arranged!", "color: red;");
 
         console.log("#############################################");
@@ -85,7 +85,7 @@
         console.log("%cRemoving the ambiguity...", "color: orange;");
         console.log('REMOVING AMBIGUITY');
         this.removeAmbiguity(graph, rules);
-
+        this.printErrors();
         console.log("%cThe ambiguity are removed!", "color: orange;");
 
         console.log("#############################################");
@@ -93,8 +93,8 @@
         console.log("%cAppling the rules...", "color: yellow;");
         console.log('APPLING THE RULES');
         this.applyRules(graph, rules);
-
         console.log('%cRules applied!', "color: yellow;");
+        this.printErrors();
 
         console.log("#############################################");
 
@@ -118,11 +118,9 @@
 
         let semanticResult = this.applySemanticRules(orderedGraph, semanticRulesByRef);
         console.log(semanticResult);
-
-        console.log('%cSemantic rules applied!', "color: green;");
-
-        console.log("#############################################");
         this.printErrors();
+        console.log('%cSemantic rules applied!', "color: green;");
+        console.log("#############################################");
     }
 
     /**
@@ -862,6 +860,9 @@
         let sourceState = this.editorUi.editor.graph.view.getState(connector.source);
         let targetState = this.editorUi.editor.graph.view.getState(connector.target);
 
+        console.log(sourceState);
+        
+
         let exitX = connectorState.style.exitX;
         let exitY = connectorState.style.exitY;
 
@@ -873,6 +874,10 @@
 
         let sourceGraphRef = sourceState.shape.stencil.desc.attributes.graphicRef.value;
         let targetGraphRef = targetState.shape.stencil.desc.attributes.graphicRef.value;
+
+        console.log(this.aliases);
+
+        console.log([this.aliases[sourceGraphRef][sourceAPConstraintName], this.aliases[targetGraphRef][targetAPConstraintName]]);
 
         return [this.aliases[sourceGraphRef][sourceAPConstraintName], this.aliases[targetGraphRef][targetAPConstraintName]];
     }
@@ -979,6 +984,9 @@
         return edges;
     }
 
+    /**
+     * Function that execute a stable sort on a array
+     */
     CheckUtil.prototype.stableSort = function (array, cmp) {
         cmp = !!cmp ? cmp : (a, b) => {
             if (a < b) return -1;
@@ -998,6 +1006,9 @@
         return array;
     }
 
+    /**
+     * Print a graph
+     */
     CheckUtil.prototype.printGraph = function (graph) {
         if (Array.isArray(graph))
             return graph.map((cell) => { return cell.id });
