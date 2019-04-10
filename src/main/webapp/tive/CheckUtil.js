@@ -182,28 +182,6 @@
         let vertexs = this.getNodes(graph);
         let edges = this.getEdges(graph);
 
-        let parser = new DOMParser();
-        let stencils = localStorage.getItem('STENCIL');
-        let stencilsXML = parser.parseFromString(stencils, 'application/xml');
-
-        let connectors = localStorage.getItem('CONNECTOR');
-        let connectorsXML = parser.parseFromString(connectors, 'application/xml');
-
-        let shapesCollection = Array.from(stencilsXML.getElementsByTagName('shape'));
-        let connectorsCollection = Array.from(connectorsXML.getElementsByTagName('connector'));
-
-        // let allStencilsGrafRef = shapesCollection.map((elem) => {
-        //     return {
-        //         'graphicRef': elem.getAttribute('graphicRef'),
-        //         'name': elem.getAttribute('name')
-        //     };
-        // }).concat(connectorsCollection.map((elem) => {
-        //     return {
-        //         'graphicRef': elem.getAttribute('graphicRef'),
-        //         'name': 'Line'
-        //     };
-        // }));
-
         let allStencilsGrafRef = rules.language.token.map((elem) => {
             return {
                 'graphicRef': elem._ref,
@@ -217,7 +195,7 @@
         }));
 
         console.log(allStencilsGrafRef);
-        
+
 
         for (grafRef in allStencilsGrafRef) {
             this.allRefMap[allStencilsGrafRef[grafRef].graphicRef] = [];
@@ -262,10 +240,10 @@
             let elemState = this.editorUi.editor.graph.view.getState(graphElem);
             this.changeShapeColor(graphElem, 'black');
             console.log(elemState);
-            
+
             let elemGraphRef = elemState.shape.stencil.desc.attributes.name.value;
             console.log(this.allRefMap, elemGraphRef);
-            
+
             if (this.allRefMap[elemGraphRef].length == 1) {
                 graphElem.name = this.allRefMap[elemGraphRef][0]._name;
                 console.log(graphElem.id + " is a " + graphElem.name + "!");
@@ -882,7 +860,7 @@
         let targetState = this.editorUi.editor.graph.view.getState(connector.target);
 
         console.log(sourceState);
-        
+
 
         let exitX = connectorState.style.exitX;
         let exitY = connectorState.style.exitY;

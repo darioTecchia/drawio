@@ -424,23 +424,10 @@
 	Sidebar.prototype.init = function()
 	{
 
-		if(localStorage.getItem('STENCIL')) {
-			let stencil = localStorage.getItem('STENCIL');
-			let parser = new DOMParser();
-			let stencilXML = parser.parseFromString(stencil, 'application/xml');
-			let stencilName = stencilXML.getElementsByTagName('shapes')[0].getAttribute('name');
-			let data = new Blob([stencil], {type: 'application/xml'});
-			let url = URL.createObjectURL(data);
-			this.addStencilPalette(stencilName.toLowerCase, stencilName, url, ';whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=2');
-		}
-		if(localStorage.getItem('CONNECTOR')) {
-			let connector = localStorage.getItem('CONNECTOR');
-			let parser = new DOMParser();
-			let connectorXML = parser.parseFromString(connector, 'application/xml');
-			let connectorName = connectorXML.getElementsByTagName('connectors')[0].getAttribute('name');
-			let data = new Blob([connector], {type: 'application/xml'});
-			let url = URL.createObjectURL(data);
-			this.addConnectorsPalette(connectorName.toLowerCase, connectorName, url, ';whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=2');
+		if(localStorage.getItem('LIBRARY')) {
+			let library = localStorage.getItem('LIBRARY');
+			let libFile = new LocalLibrary(this.editorUi, library, 'library');
+			this.editorUi.loadLibrary(libFile);
 		}
 
 		// Defines all entries for the sidebar. This is used in the MoreShapes dialog. Create screenshots using the savesidebar URL parameter and

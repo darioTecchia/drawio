@@ -2782,6 +2782,7 @@ App.prototype.pickLibrary = function(mode)
 							try
 							{
 								this.loadLibrary(new LocalLibrary(this, e.target.result, file.name));
+								localStorage.setItem('LIBRARY', new LocalLibrary(this, e.target.result, file.name).data)
 							}
 							catch (e)
 							{

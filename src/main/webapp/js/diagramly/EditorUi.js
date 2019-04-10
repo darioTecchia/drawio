@@ -2617,11 +2617,9 @@
 	 * @param {number} dy Y-coordinate of the translation.
 	 */
 	EditorUi.prototype.loadLibrary = function(file)
-	{
+	{	
 		var doc = mxUtils.parseXml(file.getData());
 
-		console.log(doc);
-		
 		if (doc.documentElement.nodeName == 'mxlibrary')
 		{
 			var images = JSON.parse(mxUtils.getTextContent(doc.documentElement));
