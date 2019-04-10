@@ -13,7 +13,7 @@ mxscript(drawDevUrl + 'js/deflate/pako.min.js');
 mxscript(drawDevUrl + 'js/deflate/base64.js');
 mxscript(drawDevUrl + 'js/jscolor/jscolor.js');
 mxscript(drawDevUrl + 'js/sanitizer/sanitizer.min.js');
-mxscript(tiveBasePath + '/utils/graph-util.js');
+mxscript(drawDevUrl + 'tive/utils/graph-util.js');
 
 
 // Uses grapheditor from devhost
@@ -136,6 +136,6 @@ if (urlParams['tableLayout'] == '1')
 }
 
 // tive files
-mxscript(tiveBasePath + '/Sidebar.js');
-mxscript(tiveBasePath + '/CheckUtil.js');
-mxscript(tiveBasePath + '/Menus.js');
+mxscript(drawDevUrl + 'tive/Sidebar.js');
+mxscript(drawDevUrl + 'tive/CheckUtil.js');
+mxscript(drawDevUrl + 'tive/Menus.js');
