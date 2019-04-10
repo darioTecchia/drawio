@@ -115,6 +115,29 @@ window.mxLanguageMap = window.mxLanguageMap ||
 	'zh-tw' : '繁體中文'
 };
 
+if(urlParams['loadExample']) {
+	let exampleToLoad = urlParams['loadExample'];
+	console.log(exampleToLoad);
+	switch (exampleToLoad) {
+		case 'tree':
+			fetch('EXAMPLES/Tree/newDefinition.json')
+				.then(response => response.json())
+				.then((jsonResponse) => {
+					localStorage.setItem('RULES', JSON.stringify(jsonResponse))
+				})    
+				
+			fetch('EXAMPLES/Tree/newSemanticDefinition.json')
+				.then(response => response.json())
+				.then((jsonResponse) => {
+					localStorage.setItem('SEMANTIC_RULES', JSON.stringify(jsonResponse))
+				})    
+			break;
+	
+		default:
+			break;
+	}
+}
+
 if (typeof window.mxBasePath === 'undefined')
 {
 	window.mxBasePath = 'mxgraph';
