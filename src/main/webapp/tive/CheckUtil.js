@@ -41,7 +41,8 @@
 
         if (!wnd) {
             let elem = document.createElement('div');
-            elem.style.color='red'
+            elem.style.color='red';
+            elem.setAttribute('color', 'red');
             wnd = new mxWindow('Console', elem, 300, 50, 400, 600, null, true, true);
             wnd.destroyOnClose = false;
             wnd.setMaximizable(true);
@@ -318,6 +319,8 @@
                 }
                 if (!graphElem.name) {
                     this.errors.push({ 'error': 'Impossible to disambigue this node!', 'elem': graphElem });
+                    printError('Impossible to disambigue this node!');
+                    return false;
                 }
             }
         }
@@ -331,10 +334,16 @@
             this.changeShapeColor(graphElem, 'black');
 
             let elemGraphRef = elemState.style.graphicRef;
-            if (graphElem.source == graphElem.target)
+            if (graphElem.source == graphElem.target) {
                 this.errors.push({ 'error': 'Loop', 'elem': graphElem });
-            if (graphElem.source == null || graphElem.target == null)
+                printError('Loop');
+                return false;
+            }
+            if (graphElem.source == null || graphElem.target == null) {
                 this.errors.push({ 'error': 'Edge with null attaching point!', 'elem': graphElem });
+                printError('Edge with null attaching point!');
+                return false;
+            }
             if (this.allRefMap[elemGraphRef].length == 1) {
                 graphElem.name = this.allRefMap[elemGraphRef][0]._name;
                 let graphElemRules = rulesByName[graphElem.name];
@@ -372,8 +381,13 @@
                 }
                 if (!graphElem.name) {
                     this.errors.push({ 'error': 'Impossible to disambigue this edge!', 'elem': graphElem });
+                    print('Impossible to disambigue this edge!');
+                    return false;
+                    
                 }
                 this.errors.push({ 'error': 'This edge is used wrong!', 'elem': graphElem });
+                printError('This edge is used wrong!');
+                return false;
             }
         }
     }
