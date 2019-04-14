@@ -760,6 +760,7 @@ resultsFor=resultsFor
 
 loadStencil=loadStencil
 loadRules=loadRules
-loadSemantiRules=loadSemantiRules
+loadSemanticRules=loadSemanticRules
 loadConnectors=loadConnectors
 check=check
+tive=tive

@@ -2862,76 +2862,7 @@
 			}
 		})));
 
-		this.put('check', new Menu(mxUtils.bind(this, function(menu, parent) {
-			editorUi.actions.addAction('check', function()
-			{
-				let rules = localStorage.getItem('RULES');
-				rules = JSON.parse(rules);
-
-				let semanticRules = localStorage.getItem('SEMANTIC_RULES');
-				semanticRules = JSON.parse(semanticRules);
-				
-				checkUtil.check(graph.model.cells, rules, semanticRules);
-			});
-			this.addMenuItems(menu, ['check'], parent);
-		})));
-
-		this.put('file', new Menu(mxUtils.bind(this, function(menu, parent)
-		{
-
-			// CUSTOM MENU START
-			// LOAD STENCIL ACTION
-			editorUi.actions.addAction('loadStencil', function()
-			{
-				// load custom palette
-				document.getElementById('file-input').onchange = function(e) {
-					var file = e.target.files[0];
-					if (!file) {
-						return;
-					}
-					var reader = new FileReader();
-					reader.onload = function (e) {
-						let contents = e.target.result;
-						let data = new Blob([contents], {type: 'application/xml'})
-						let url = URL.createObjectURL(data);
-						let parser = new DOMParser();
-						let stencilXML = parser.parseFromString(contents, 'application/xml');
-						let stencilName = stencilXML.getElementsByTagName('shapes')[0].getAttribute('name');
-						localStorage.setItem('STENCIL', contents);
-						editorUi.sidebar.addStencilPalette(stencilName.toLowerCase, stencilName, url,
-							';whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=2');
-					};
-					reader.readAsText(file);
-				}
-				document.getElementById('file-input').click();
-			});
-
-			// LOAD CONNECTORS ACTION
-			editorUi.actions.addAction('loadConnectors', function()
-			{
-				// load custom connector palette
-				document.getElementById('file-input').onchange = function(e) {
-					var file = e.target.files[0];
-					if (!file) {
-						return;
-					}
-					var reader = new FileReader();
-					reader.onload = function (e) {
-						let contents = e.target.result;
-						let data = new Blob([contents], {type: 'application/xml'})
-						let url = URL.createObjectURL(data);
-						let parser = new DOMParser();
-						let stencilXML = parser.parseFromString(contents, 'application/xml');
-						let stencilName = stencilXML.getElementsByTagName('connectors')[0].getAttribute('name');
-						localStorage.setItem('CONNECTOR', contents);
-						editorUi.sidebar.addConnectorsPalette(stencilName.toLowerCase, stencilName, url,
-							';whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=2');
-					};
-					reader.readAsText(file);
-				}
-				document.getElementById('file-input').click();
-			});
-
+		this.put('tive', new Menu(mxUtils.bind(this, function(menu, parent) {
 			// LOAD RULES ACTION
 			editorUi.actions.addAction('loadRules', function()
 			{
@@ -2952,7 +2883,7 @@
 			});
 
 			// LOAD SEMANTIC RULES ACTION
-			editorUi.actions.addAction('loadSemantiRules', function()
+			editorUi.actions.addAction('loadSemanticRules', function()
 			{
 				// load custom connector palette
 				document.getElementById('file-input').onchange = function(e) {
@@ -2970,8 +2901,22 @@
 				document.getElementById('file-input').click();
 			});
 
-			this.addMenuItems(menu, ['loadStencil', 'loadConnectors', 'loadRules', 'loadSemantiRules']);
 			// CUSTOM MENU END
+			editorUi.actions.addAction('check', function()
+			{
+				let rules = localStorage.getItem('RULES');
+				rules = JSON.parse(rules);
+
+				let semanticRules = localStorage.getItem('SEMANTIC_RULES');
+				semanticRules = JSON.parse(semanticRules);
+				
+				checkUtil.check(graph.model.cells, rules, semanticRules);
+			});
+			this.addMenuItems(menu, ['loadRules', 'loadSemanticRules', '-', 'check'], parent);
+		})));
+
+		this.put('file', new Menu(mxUtils.bind(this, function(menu, parent)
+		{
 
 			menu.addSeparator(parent);
 
