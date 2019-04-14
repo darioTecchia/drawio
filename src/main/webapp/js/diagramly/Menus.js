@@ -2883,7 +2883,7 @@
 			});
 
 			// LOAD SEMANTIC RULES ACTION
-			editorUi.actions.addAction('loadSemanticRules', function()
+			var stencRulButton = editorUi.actions.addAction('loadSemanticRules', function()
 			{
 				// load custom connector palette
 				document.getElementById('file-input').onchange = function(e) {
@@ -2900,9 +2900,12 @@
 				}
 				document.getElementById('file-input').click();
 			});
+			if(!localStorage.getItem('RULES')) {
+				stencRulButton.setEnabled(false);
+			}
 
 			// CUSTOM MENU END
-			editorUi.actions.addAction('check', function()
+			var checkButton = editorUi.actions.addAction('check', function()
 			{
 				let rules = localStorage.getItem('RULES');
 				rules = JSON.parse(rules);
@@ -2912,6 +2915,9 @@
 				
 				checkUtil.check(graph.model.cells, rules, semanticRules);
 			});
+			if(!localStorage.getItem('RULES') || !localStorage.getItem('SEMANTIC_RULES')) {
+				checkButton.setEnabled(false);
+			}
 			this.addMenuItems(menu, ['loadRules', 'loadSemanticRules', '-', 'check'], parent);
 		})));
 
