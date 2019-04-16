@@ -2783,6 +2783,7 @@ App.prototype.pickLibrary = function(mode)
 							{
 								this.loadLibrary(new LocalLibrary(this, e.target.result, file.name));
 								localStorage.setItem('LIBRARY', new LocalLibrary(this, e.target.result, file.name).data)
+								localStorage.setItem('.scratchpad', new LocalLibrary(this, e.target.result, file.name).data)
 							}
 							catch (e)
 							{

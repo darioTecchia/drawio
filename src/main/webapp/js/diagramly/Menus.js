@@ -2915,7 +2915,7 @@
 				
 				checkUtil.check(graph.model.cells, rules, semanticRules);
 			});
-			if(!localStorage.getItem('RULES') || !localStorage.getItem('SEMANTIC_RULES')) {
+			if(!localStorage.getItem('RULES')) {
 				checkButton.setEnabled(false);
 			}
 			this.addMenuItems(menu, ['loadRules', 'loadSemanticRules', '-', 'check'], parent);

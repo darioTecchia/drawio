@@ -35,13 +35,14 @@
         }
 
         wnd.contentWrapper.innerHTML = wnd.contentWrapper.innerHTML + str;
+        wnd.contentWrapper.innerHTML = wnd.contentWrapper.innerHTML + '</br>';
         wnd.show()
     }
     function printError(str) {
 
         if (!wnd) {
             let elem = document.createElement('div');
-            elem.style.color='red';
+            elem.style.color = 'red';
             elem.setAttribute('color', 'red');
             wnd = new mxWindow('Console', elem, 300, 50, 400, 600, null, true, true);
             wnd.destroyOnClose = false;
@@ -53,6 +54,7 @@
         }
 
         wnd.contentWrapper.innerHTML = wnd.contentWrapper.innerHTML + str;
+        wnd.contentWrapper.innerHTML = wnd.contentWrapper.innerHTML + '</br>';
         wnd.show()
     }
 
@@ -113,35 +115,47 @@
 
         console.log("%cAppling the rules...", "color: yellow;");
         console.log('APPLING THE RULES');
-        this.applyRules(graph, rules);
-        console.log('%cRules applied!', "color: yellow;");
-        this.printErrors();
 
-        console.log("#############################################");
+        let rulesResult = this.applyRules(graph, rules);
+        console.log(rulesResult);
+        if (rulesResult) {
+            if (semanticRules) {
+                console.log("#############################################");
 
-        console.log("%cAppling the semantic rules...", "color: green;");
-        console.log('APPLING SEMANTIC RULES');
+                console.log("%cAppling the semantic rules...", "color: green;");
+                console.log('APPLING SEMANTIC RULES');
 
-        let semanticRulesByRef = {};
-        for (let elem in semanticRules.language.semantic) {
-            let semanticRule = semanticRules.language.semantic[elem];
-            semanticRulesByRef[semanticRule._ref] = semanticRule;
+                let semanticRulesByRef = {};
+                for (let elem in semanticRules.language.semantic) {
+                    let semanticRule = semanticRules.language.semantic[elem];
+                    semanticRulesByRef[semanticRule._ref] = semanticRule;
+                }
+
+                // CALCULATING PRIORITY TABLE
+                let visitTable = this.getVisitTable(semanticRulesByRef);
+
+                // ORDERIGN ALL THE NODES
+                console.log('APPLING VISIT TABLE');
+                let orderedGraph = this.applyVisitTable(graph, visitTable);
+
+                console.info('orderedGraph', this.printGraph(orderedGraph));
+
+                let semanticResult = this.applySemanticRules(orderedGraph, semanticRulesByRef);
+                console.log(semanticResult);
+                this.printErrors();
+                console.log('%cSemantic rules applied!', "color: green;");
+                console.log("#############################################");
+            } else {
+                print("IL DIAGRAMMA RISPETTA LE REGOLE");
+                return true;
+            }
+        } else {
+            printError('IL DIAGRAMMA NON RISPETTA LE REGOLE');
+            return false;
         }
 
-        // CALCULATING PRIORITY TABLE
-        let visitTable = this.getVisitTable(semanticRulesByRef);
-
-        // ORDERIGN ALL THE NODES
-        console.log('APPLING VISIT TABLE');
-        let orderedGraph = this.applyVisitTable(graph, visitTable);
-
-        console.info('orderedGraph', this.printGraph(orderedGraph));
-
-        let semanticResult = this.applySemanticRules(orderedGraph, semanticRulesByRef);
-        console.log(semanticResult);
+        console.log('%cRules applied!', "color: yellow;");
         this.printErrors();
-        console.log('%cSemantic rules applied!', "color: green;");
-        console.log("#############################################");
     }
 
     /**
@@ -197,6 +211,7 @@
                 }
             }
         }
+        return true;
     }
 
     /**
@@ -266,62 +281,41 @@
             this.changeShapeColor(graphElem, 'black');
 
             let elemGraphRef = elemState.shape.stencil.desc.attributes.name.value;
-
-            if (this.allRefMap[elemGraphRef].length == 1) {
-                graphElem.name = this.allRefMap[elemGraphRef][0]._name;
-                console.log(graphElem.id + " is a " + graphElem.name + "!");
-                let graphElemRules = rulesByName[graphElem.name];
-                graphElem.rules = graphElemRules;
-                graphElem.semanticProperty = {};
-                if (graphElemRules.text) {
-                    if (graphElemRules.text[0]._type && graphElemRules.text[0]._type.charAt(0) == '(') {
-                        graphElem.semanticProperty[graphElemRules.text[0]._name] = graphElem.value;
-                    } else {
-                        graphElem.semanticProperty[graphElemRules.text[0]._name] = graphElem.value;
-                    }
+            let edgesByApName = this.getEdgesByAPName(graphElem, elemState);
+            for (let elem in this.allRefMap[elemGraphRef]) {
+                let correct = true;
+                let token = this.allRefMap[elemGraphRef][elem];
+                for (let elem in token.ap) {
+                    let ap = token.ap[elem];
+                    correct = correct && eval(edgesByApName[ap._ref].length + ap._connectNum);
                 }
-                for (let vertex in this.allRefMap[elemGraphRef][0].ap) {
-                    let ref = this.allRefMap[elemGraphRef][0].ap[vertex];
-                    this.aliases[elemGraphRef][ref._ref] = ref._type;
+                if (!!this.rulesGrafRefs[elemGraphRef].localConstraint) {
+                    correct = correct && this.checkSymbolLocalConstraint(graphElem, elemState);
                 }
-            } else {
-                console.log('Ambiguity detected...\nResolving...');
-                let edgesByApName = this.getEdgesByAPName(graphElem, elemState);
-                for (let elem in this.allRefMap[elemGraphRef]) {
-                    let correct = true;
-                    let token = this.allRefMap[elemGraphRef][elem];
-                    for (let elem in token.ap) {
-                        let ap = token.ap[elem];
-                        correct = correct && eval(edgesByApName[ap._ref].length + ap._connectNum);
-                    }
-                    if (!!this.rulesGrafRefs[elemGraphRef].localConstraint) {
-                        correct = correct && this.checkSymbolLocalConstraint(graphElem, elemState);
-                    }
-                    if (correct) {
-                        graphElem.name = token._name;
-                        console.log(graphElem.id + " is a " + token._name + "!");
-                        let graphElemRules = rulesByName[graphElem.name];
-                        graphElem.rules = graphElemRules;
-                        graphElem.semanticProperty = {};
-                        if (graphElemRules.text) {
-                            if (graphElemRules.text[0]._type && graphElemRules.text[0]._type.charAt(0) == '(') {
-                                graphElem.semanticProperty[graphElemRules.text[0]._name] = graphElem.value;
-                            } else {
-                                graphElem.semanticProperty[graphElemRules.text[0]._name] = graphElem.value;
-                            }
+                if (correct) {
+                    graphElem.name = token._name;
+                    console.log(graphElem.id + " is a " + token._name + "!");
+                    let graphElemRules = rulesByName[graphElem.name];
+                    graphElem.rules = graphElemRules;
+                    graphElem.semanticProperty = {};
+                    if (graphElemRules.text) {
+                        if (graphElemRules.text[0]._type && graphElemRules.text[0]._type.charAt(0) == '(') {
+                            graphElem.semanticProperty[graphElemRules.text[0]._name] = graphElem.value;
+                        } else {
+                            graphElem.semanticProperty[graphElemRules.text[0]._name] = graphElem.value;
                         }
-                        for (let vertex in this.allRefMap[elemGraphRef][0].ap) {
-                            let ref = this.allRefMap[elemGraphRef][0].ap[vertex];
-                            this.aliases[elemGraphRef][ref._ref] = ref._type;
-                        }
-                        continue check_for;
                     }
+                    for (let vertex in this.allRefMap[elemGraphRef][0].ap) {
+                        let ref = this.allRefMap[elemGraphRef][0].ap[vertex];
+                        this.aliases[elemGraphRef][ref._ref] = ref._type;
+                    }
+                    continue check_for;
                 }
-                if (!graphElem.name) {
-                    this.errors.push({ 'error': 'Impossible to disambigue this node!', 'elem': graphElem });
-                    printError('Impossible to disambigue this node!');
-                    return false;
-                }
+            }
+            if (!graphElem.name) {
+                this.errors.push({ 'error': 'Impossible to disambigue this node!', 'elem': graphElem });
+                printError('Impossible to disambigue this node!');
+                return false;
             }
         }
 
@@ -331,6 +325,7 @@
         check_for: for (let edge in edges) {
             let graphElem = edges[edge];
             let elemState = this.editorUi.editor.graph.view.getState(graphElem);
+
             this.changeShapeColor(graphElem, 'black');
 
             let elemGraphRef = elemState.style.graphicRef;
@@ -344,52 +339,111 @@
                 printError('Edge with null attaching point!');
                 return false;
             }
-            if (this.allRefMap[elemGraphRef].length == 1) {
-                graphElem.name = this.allRefMap[elemGraphRef][0]._name;
-                let graphElemRules = rulesByName[graphElem.name];
-                graphElem.rules = graphElemRules;
-                graphElem.semanticProperty = {};
-                if (graphElemRules.text) {
-                    if (graphElemRules.text[0]._type && graphElemRules.text[0]._type.charAt(0) == '(') {
-                        graphElem.semanticProperty[graphElemRules.text[0]._name] = graphElem.value;
-                    } else {
-                        graphElem.semanticProperty[graphElemRules.text[0]._name] = graphElem.value;
-                    }
-                }
-                console.log(graphElem.id + " is a " + graphElem.name + "!");
-            } else {
-                console.log('Ambiguity detected...\nResolving...');
-                let caps = this.getCapsRefs(graphElem, elemState);
-                check: for (let cap in this.allRefMap[elemGraphRef]) {
-                    let elemCap = this.allRefMap[elemGraphRef][cap];
-                    let myCaps = [elemCap.ap[0]._type, elemCap.ap[1]._type];
-                    if (caps.sort()[0] == myCaps.sort()[0] && caps.sort()[1] == myCaps.sort()[1]) {
-                        graphElem.name = elemCap._name;
-                        console.log(graphElem.id + " is a " + graphElem.name + "!");
-                        let graphElemRules = rulesByName[graphElem.name];
-                        graphElem.rules = graphElemRules;
-                        graphElem.semanticProperty = {};
-                        if (graphElemRules.text) {
-                            if (graphElemRules.text[0]._type && graphElemRules.text[0]._type.charAt(0) == '(') {
-                                graphElem.semanticProperty[graphElemRules.text[0]._name] = graphElem.value;
-                            } else {
-                                graphElem.semanticProperty[graphElemRules.text[0]._name] = graphElem.value;
-                            }
+            let caps = this.getCapsRefs(graphElem, elemState);
+
+            let APInfo = {
+                "source": elemState.style.attP.split('-')[0].split(':'),
+                "target": elemState.style.attP.split('-')[1].split(':')
+            }
+            this.checkApName(graphElem, elemState, rules, APInfo, caps);
+            break;
+
+            check: for (let cap in this.allRefMap[elemGraphRef]) {
+                let elemCap = this.allRefMap[elemGraphRef][cap];
+                let myCaps = [elemCap.ap[0]._type, elemCap.ap[1]._type];
+                if (caps.sort()[0] == myCaps.sort()[0] && caps.sort()[1] == myCaps.sort()[1]) {
+                    graphElem.name = elemCap._name;
+                    console.log(graphElem.id + " is a " + graphElem.name + "!");
+                    let graphElemRules = rulesByName[graphElem.name];
+                    graphElem.rules = graphElemRules;
+                    graphElem.semanticProperty = {};
+                    if (graphElemRules.text) {
+                        if (graphElemRules.text[0]._type && graphElemRules.text[0]._type.charAt(0) == '(') {
+                            graphElem.semanticProperty[graphElemRules.text[0]._name] = graphElem.value;
+                        } else {
+                            graphElem.semanticProperty[graphElemRules.text[0]._name] = graphElem.value;
                         }
-                        continue check_for;
                     }
+                    continue check_for;
                 }
-                if (!graphElem.name) {
-                    this.errors.push({ 'error': 'Impossible to disambigue this edge!', 'elem': graphElem });
-                    print('Impossible to disambigue this edge!');
-                    return false;
-                    
-                }
-                this.errors.push({ 'error': 'This edge is used wrong!', 'elem': graphElem });
-                printError('This edge is used wrong!');
+            }
+            if (!graphElem.name) {
+                this.errors.push({ 'error': 'Impossible to disambigue this edge!', 'elem': graphElem });
+                print('Impossible to disambigue this edge!');
                 return false;
+
+            }
+            this.errors.push({ 'error': 'This edge is used wrong!', 'elem': graphElem });
+            printError('This edge is used wrong!');
+            return false;
+        }
+    }
+
+    /**
+     * 
+     */
+    CheckUtil.prototype.checkApName = function (graphElem, elemState, rules, sourceAndTargetNames, APsNames) {
+        console.log(rules, sourceAndTargetNames, APsNames);
+        let elemGraphRef = elemState.style.graphicRef;
+
+        let arrows = [];
+        for (let cap in this.allRefMap[elemGraphRef]) {
+            let elemCap = this.allRefMap[elemGraphRef][cap];
+            let myCaps = [elemCap.ap[0]._type, elemCap.ap[1]._type]
+            console.log(elemCap, myCaps);
+
+            let splittedRefs = elemCap.ap[0]._ref.split(':');
+            if (splittedRefs.length == 2) {
+                arrows.push([{
+                    "_elemName": elemCap._name,
+                    "_type": elemCap.ap[0]._type,
+                    "_name": elemCap.ap[0]._name,
+                    "_ref": elemCap.ap[0]._ref.split(':')[0]
+                },
+                {
+                    "_elemName": elemCap._name,
+                    "_type": elemCap.ap[1]._type,
+                    "_name": elemCap.ap[1]._name,
+                    "_ref": elemCap.ap[1]._ref.split(':')[0]
+                }]);
+                arrows.push([{
+                    "_elemName": elemCap._name,
+                    "_type": elemCap.ap[0]._type,
+                    "_name": elemCap.ap[0]._name,
+                    "_ref": elemCap.ap[0]._ref.split(':')[1]
+                },
+                {
+                    "_elemName": elemCap._name,
+                    "_type": elemCap.ap[1]._type,
+                    "_name": elemCap.ap[1]._name,
+                    "_ref": elemCap.ap[1]._ref.split(':')[1]
+                }]);
+            } else {
+                arrows.push([{
+                    "_elemName": elemCap._name,
+                    "_type": elemCap.ap[0]._type,
+                    "_name": elemCap.ap[0]._name,
+                    "_ref": elemCap.ap[0]._ref
+                },
+                {
+                    "_elemName": elemCap._name,
+                    "_type": elemCap.ap[1]._type,
+                    "_name": elemCap.ap[1]._name,
+                    "_ref": elemCap.ap[1]._ref
+                }]);
             }
         }
+        console.log(arrows);
+        console.log(arrows.find((elem) => {
+            return (
+                ((elem[0]._type == APsNames[0]) && (elem[0]._ref == sourceAndTargetNames.source[0]))
+                &&
+                ((elem[1]._type == APsNames[1]) && (elem[1]._ref == sourceAndTargetNames.target[0]))
+            ) ||
+                (((elem[0]._type == APsNames[1]) && (elem[0]._ref == sourceAndTargetNames.source[1]))
+                    &&
+                    ((elem[1]._type == APsNames[0]) && (elem[1]._ref == sourceAndTargetNames.target[1])))
+        })[0]._elemName);
     }
 
     /**
@@ -442,7 +496,6 @@
             });
             console.info('INCOMPLETED NODES: ', graph);
         }
-
         return true;
     }
 
@@ -472,8 +525,6 @@
                         propertyProcedure._param,
                         propertyProcedure._path,
                         propertyProcedure._postCondition)) {
-                        console.log('DIO ANIMALE');
-
                         continue external_prop;
                     }
 
@@ -895,9 +946,6 @@
         let sourceState = this.editorUi.editor.graph.view.getState(connector.source);
         let targetState = this.editorUi.editor.graph.view.getState(connector.target);
 
-        console.log(sourceState);
-
-
         let exitX = connectorState.style.exitX;
         let exitY = connectorState.style.exitY;
 
@@ -910,9 +958,7 @@
         let sourceGraphRef = sourceState.shape.stencil.desc.attributes.name.value;
         let targetGraphRef = targetState.shape.stencil.desc.attributes.name.value;
 
-        console.log(this.aliases);
-
-        console.log([this.aliases[sourceGraphRef][sourceAPConstraintName], this.aliases[targetGraphRef][targetAPConstraintName]]);
+        // console.log([this.aliases[sourceGraphRef][sourceAPConstraintName], this.aliases[targetGraphRef][targetAPConstraintName]]);
 
         return [this.aliases[sourceGraphRef][sourceAPConstraintName], this.aliases[targetGraphRef][targetAPConstraintName]];
     }
