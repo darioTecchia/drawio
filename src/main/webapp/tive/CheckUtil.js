@@ -107,13 +107,13 @@
 
         console.log("%cRemoving the ambiguity...", "color: orange;");
         console.log('REMOVING AMBIGUITY');
-        
-        if(!this.removeAmbiguity(graph, rules)) {
+
+        if (!this.removeAmbiguity(graph, rules)) {
             printError('Graph is not disambigued!');
             this.printErrors();
             return false;
         }
-        
+
         console.log("%cThe ambiguity are removed!", "color: orange;");
 
         console.log("#############################################");
@@ -350,9 +350,20 @@
                 "source": elemState.style.attP.split('-')[0].split(':'),
                 "target": elemState.style.attP.split('-')[1].split(':')
             }
+
             this.checkApName(graphElem, elemState, rules, APInfo, caps);
             graphElem.name = this.checkApName(graphElem, elemState, rules, APInfo, caps);
             console.log(graphElem.id + " is a " + graphElem.name + "!");
+            let graphElemRules = rulesByName[graphElem.name];
+            graphElem.rules = graphElemRules;
+            graphElem.semanticProperty = {};
+            if (graphElemRules.text) {
+                if (graphElemRules.text[0]._type && graphElemRules.text[0]._type.charAt(0) == '(') {
+                    graphElem.semanticProperty[graphElemRules.text[0]._name] = graphElem.value;
+                } else {
+                    graphElem.semanticProperty[graphElemRules.text[0]._name] = graphElem.value;
+                }
+            }
             if (!graphElem.name) {
                 this.errors.push({ 'error': 'Impossible to disambigue this edge!', 'elem': graphElem });
                 print('Impossible to disambigue this edge!');
