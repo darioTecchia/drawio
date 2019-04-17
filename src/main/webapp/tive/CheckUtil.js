@@ -107,8 +107,13 @@
 
         console.log("%cRemoving the ambiguity...", "color: orange;");
         console.log('REMOVING AMBIGUITY');
-        this.removeAmbiguity(graph, rules);
-        this.printErrors();
+        
+        if(!this.removeAmbiguity(graph, rules)) {
+            printError('Graph is not disambigued!');
+            this.printErrors();
+            return false;
+        }
+        
         console.log("%cThe ambiguity are removed!", "color: orange;");
 
         console.log("#############################################");
@@ -346,51 +351,27 @@
                 "target": elemState.style.attP.split('-')[1].split(':')
             }
             this.checkApName(graphElem, elemState, rules, APInfo, caps);
-            break;
-
-            check: for (let cap in this.allRefMap[elemGraphRef]) {
-                let elemCap = this.allRefMap[elemGraphRef][cap];
-                let myCaps = [elemCap.ap[0]._type, elemCap.ap[1]._type];
-                if (caps.sort()[0] == myCaps.sort()[0] && caps.sort()[1] == myCaps.sort()[1]) {
-                    graphElem.name = elemCap._name;
-                    console.log(graphElem.id + " is a " + graphElem.name + "!");
-                    let graphElemRules = rulesByName[graphElem.name];
-                    graphElem.rules = graphElemRules;
-                    graphElem.semanticProperty = {};
-                    if (graphElemRules.text) {
-                        if (graphElemRules.text[0]._type && graphElemRules.text[0]._type.charAt(0) == '(') {
-                            graphElem.semanticProperty[graphElemRules.text[0]._name] = graphElem.value;
-                        } else {
-                            graphElem.semanticProperty[graphElemRules.text[0]._name] = graphElem.value;
-                        }
-                    }
-                    continue check_for;
-                }
-            }
+            graphElem.name = this.checkApName(graphElem, elemState, rules, APInfo, caps);
+            console.log(graphElem.id + " is a " + graphElem.name + "!");
             if (!graphElem.name) {
                 this.errors.push({ 'error': 'Impossible to disambigue this edge!', 'elem': graphElem });
                 print('Impossible to disambigue this edge!');
                 return false;
-
             }
-            this.errors.push({ 'error': 'This edge is used wrong!', 'elem': graphElem });
-            printError('This edge is used wrong!');
-            return false;
         }
+        return true;
     }
 
     /**
      * 
      */
     CheckUtil.prototype.checkApName = function (graphElem, elemState, rules, sourceAndTargetNames, APsNames) {
-        console.log(rules, sourceAndTargetNames, APsNames);
         let elemGraphRef = elemState.style.graphicRef;
 
         let arrows = [];
         for (let cap in this.allRefMap[elemGraphRef]) {
             let elemCap = this.allRefMap[elemGraphRef][cap];
             let myCaps = [elemCap.ap[0]._type, elemCap.ap[1]._type]
-            console.log(elemCap, myCaps);
 
             let splittedRefs = elemCap.ap[0]._ref.split(':');
             if (splittedRefs.length == 2) {
@@ -433,17 +414,21 @@
                 }]);
             }
         }
-        console.log(arrows);
-        console.log(arrows.find((elem) => {
-            return (
-                ((elem[0]._type == APsNames[0]) && (elem[0]._ref == sourceAndTargetNames.source[0]))
-                &&
-                ((elem[1]._type == APsNames[1]) && (elem[1]._ref == sourceAndTargetNames.target[0]))
-            ) ||
-                (((elem[0]._type == APsNames[1]) && (elem[0]._ref == sourceAndTargetNames.source[1]))
+        try {
+            let connName = arrows.find((elem) => {
+                return (
+                    ((elem[0]._type == APsNames[0]) && (elem[0]._ref == sourceAndTargetNames.source[0]))
                     &&
-                    ((elem[1]._type == APsNames[0]) && (elem[1]._ref == sourceAndTargetNames.target[1])))
-        })[0]._elemName);
+                    ((elem[1]._type == APsNames[1]) && (elem[1]._ref == sourceAndTargetNames.target[0]))
+                ) ||
+                    (((elem[0]._type == APsNames[1]) && (elem[0]._ref == sourceAndTargetNames.source[1]))
+                        &&
+                        ((elem[1]._type == APsNames[0]) && (elem[1]._ref == sourceAndTargetNames.target[1])))
+            })[0]._elemName;
+            return connName;
+        } catch (error) {
+            return undefined;
+        }
     }
 
     /**
