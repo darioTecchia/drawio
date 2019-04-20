@@ -1,19 +1,5 @@
 (function () {
 
-    /**
-     * TODO
-     * - NEED TO CHECK IF THE GRAPH IS CONNECTED
-     * - NEED TO STORE INFO ABOUNT AP NAME, TYPE, REF [OK]
-     * - NEED TO SEPARATE INFO FOR SEMANTIC PURPOSE [OK]
-     * - IMPLEMENT followPath FUNCTION [OK]
-     * - MOVE NODE TEXT INFO INTO THE DEFINITION FROM THE SEMANTIC DEFINITION (LOOK THE PAPAER) [OK]
-     * - IMPLEMENT getNodeByAPName AND getNodeByAPType [OK]
-     * - RENAME ALL CAP IN AP [OK]
-     * - DELETE _ref FIELD
-     * - TEXT MUST BE AN ARRAY [OK]
-     * - IMPLEMENT postCondition FOR ALL FUCTION [OK]
-     */
-
     /** RULES FUNCTIONS */
     function connectNum(ApName) {
         return ApName.length;
@@ -63,13 +49,16 @@
         this.checkUtil = Object();
         this.errors = [];
         this.aliases = [];
+        this.checkedIds = [];
         this.allRefMap = {};
         this.rulesGrafRefs = {};
         this.semanticRulesByRef = {};
         this.init();
     }
 
-    CheckUtil.prototype.init = function () { }
+    CheckUtil.prototype.init = function () { 
+
+    }
 
     /**
      * Check if the graph respect all the definition and apply the semantic rules
@@ -80,11 +69,31 @@
 
         delete graph[0];
         delete graph[1];
+
+        this.checkedIds = [];
+
         for (let elem in graph) {
             let graphElem = graph[elem];
             delete graphElem.name;
+            delete graphElem.newId;
             delete graphElem.semanticProperty;
         }
+
+        for (let elem in graph) {
+            let graphElem = graph[elem];
+            if(graphElem.newId) {continue;}
+            let i = 1;
+            do {
+                var newID = graphElem.id.substring(graphElem.id.length - i, graphElem.id.length);
+                i++;
+            } while (this.checkedIds.indexOf(newID) != -1);
+            graphElem.newId = true;
+            graphElem.setId(newID);
+            this.checkedIds.push(newID);
+            console.log(this.checkedIds);
+        }
+
+        
         this.errors = [];
 
         if (wnd) {
@@ -1163,37 +1172,6 @@
     CheckUtil.prototype.add = function (thos, graphElem, propertyName, param, path = "", postCondition = "") {
 
         thos.addAll(thos, graphElem, propertyName, param, path, postCondition);
-
-        // let postConditionRegex = /\$(\w+)/i;
-        // param = param.slice(1);
-        // postCondition = postCondition.replace(postConditionRegex, 'graphElem.semanticProperty.$1');
-
-        // if (path) {
-        //     console.log('PATH HERE!');
-        //     let pathResult = thos.resolvePath(graphElem, path);
-
-        //     graphElem.semanticProperty[propertyName] = [];
-        //     for (let elem in pathResult) {
-        //         let pathElem = pathResult[elem];
-
-        //         if (pathElem.semanticProperty[param] != undefined) {
-        //             graphElem.semanticProperty[propertyName].push(pathElem.semanticProperty[param]);
-        //             console.log(graphElem.semanticProperty[propertyName]);
-        //         } else {
-        //             graphElem.semanticProperty[propertyName] = undefined;
-        //             return false
-        //         }
-        //     }
-        // } else {
-        //     graphElem.semanticProperty[propertyName] = [];
-        //     graphElem.semanticProperty[propertyName].push(param);
-        // }
-
-        // if (postCondition && !eval(postCondition)) {
-        //     console.log('postCondition not respected', postCondition);
-        //     return false;
-        // }
-
         return true;
     }
 

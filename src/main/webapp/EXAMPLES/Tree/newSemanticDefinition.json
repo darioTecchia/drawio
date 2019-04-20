@@ -11,7 +11,7 @@
                     "path": [
                         {
                             "_value": "(#attType='exit')::EDGE/NODE",
-                            "_flag": "D"
+                            "_flag": "B"
                         }
                     ],
                     "_priority": "0",
@@ -29,7 +29,7 @@
                     "path": [
                         {
                             "_value": "(#attType='exit')::EDGE/NODE",
-                            "_flag": "D"
+                            "_flag": "B"
                         }
                     ],
                     "_priority": "0",
