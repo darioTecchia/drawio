@@ -1327,6 +1327,26 @@ Actions.prototype.addAction = function(key, funct, enabled, iconCls, shortcut)
 /**
  * Registers the given action under the given name.
  */
+Actions.prototype.addActionDario = function(key, resourceParam, funct, enabled, iconCls, shortcut)
+{
+	var title;
+	
+	if (key.substring(key.length - 3) == '...')
+	{
+		key = key.substring(0, key.length - 3);
+		title = mxResources.get(key, resourceParam) + '...';
+	}
+	else
+	{
+		title = mxResources.get(key, resourceParam);
+	}
+	
+	return this.put(key, new Action(title, funct, enabled, iconCls, shortcut));
+};
+
+/**
+ * Registers the given action under the given name.
+ */
 Actions.prototype.put = function(name, action)
 {
 	this.actions[name] = action;

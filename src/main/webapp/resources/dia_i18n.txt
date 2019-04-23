@@ -764,3 +764,4 @@ loadSemanticRules=loadSemanticRules
 loadConnectors=loadConnectors
 check=check
 tive=tive
+resetRules=resetRules

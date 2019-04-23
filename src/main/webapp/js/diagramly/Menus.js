@@ -2905,7 +2905,8 @@
 			}
 
 			// CUSTOM MENU END
-			var checkButton = editorUi.actions.addAction('check', function()
+			let rulesName = localStorage.getItem('RULES') ? JSON.parse(localStorage.getItem('RULES')).language._name : 'No rules loaded';
+			var checkButton = editorUi.actions.addActionDario('check', [rulesName], function()
 			{
 				let rules = localStorage.getItem('RULES');
 				rules = JSON.parse(rules);
@@ -2918,7 +2919,18 @@
 			if(!localStorage.getItem('RULES')) {
 				checkButton.setEnabled(false);
 			}
-			this.addMenuItems(menu, ['loadRules', 'loadSemanticRules', '-', 'check'], parent);
+
+			var resetButton = editorUi.actions.addAction('resetRules', function()
+			{
+				localStorage.removeItem('RULES');
+				localStorage.removeItem('SEMANTIC_RULES');
+				console.log('rules deleted');
+			});
+			if(!localStorage.getItem('RULES') && !localStorage.getItem('SEMANTIC_RULES')) {
+				resetButton.setEnabled(false);
+			}
+
+			this.addMenuItems(menu, ['loadRules', 'loadSemanticRules', '-', 'check', '-', 'resetRules'], parent);
 		})));
 
 		this.put('file', new Menu(mxUtils.bind(this, function(menu, parent)
